@@ -1,2 +1,1 @@
-python-chess==1.999
-numpy==1.24.3
+# No external dependencies required – pure Python standard library.
