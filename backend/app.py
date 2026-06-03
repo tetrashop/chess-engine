@@ -1,16 +1,12 @@
-import os, sys, traceback
-from flask import Flask, request, jsonify, send_from_directory
+import sys, os, traceback
+from flask import Flask, request, jsonify
 
-# تشخیص محیط: اگر روی Vercel نباشیم، فایل‌های استاتیک را هم سرو می‌کنیم
-IS_VERCEL = os.environ.get('VERCEL') is not None
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# اضافه کردن پوشه‌ی backend به مسیر جستجوی ماژول‌ها
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from chess_engine.board import Board
 from chess_engine.search import Search
 
-app = Flask(__name__,
-            static_folder='../public' if not IS_VERCEL else None,
-            static_url_path='' if not IS_VERCEL else None)
+app = Flask(__name__)
 
 # CORS
 @app.after_request
@@ -20,13 +16,12 @@ def add_cors(response):
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
     return response
 
-# API endpoint
 @app.route('/api/bestmove', methods=['GET', 'OPTIONS'])
 def bestmove():
     if request.method == 'OPTIONS':
         return jsonify({}), 200
     fen = request.args.get('fen', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
-    depth = min(int(request.args.get('depth', 2)), 3)   # حداکثر ۳ برای سرعت
+    depth = min(int(request.args.get('depth', 2)), 3)
     try:
         board = Board(fen)
         search = Search(board)
@@ -45,15 +40,6 @@ def bestmove():
     except Exception:
         return jsonify({'error': traceback.format_exc()}), 500
 
-# فقط در محیط محلی: سرو فایل‌های استاتیک
-if not IS_VERCEL:
-    @app.route('/')
-    def index():
-        return send_from_directory('../public', 'index.html')
-
-    @app.route('/<path:path>')
-    def serve_static(path):
-        return send_from_directory('../public', path)
-
+# (اختیاری) اجرای مستقیم برای تست
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
