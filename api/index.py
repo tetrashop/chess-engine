@@ -1,19 +1,22 @@
-# api/index.py
 from flask import Flask, request, jsonify
-import sys
-import os
+import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from chess_engine.board import Board
 from chess_engine.search import Search
 
 app = Flask(__name__)
 
-@app.route('/')
-def home():
-    return "ChessEnginePy API is running. Use /bestmove?fen=...&depth=... or /eval?fen=..."
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    return response
 
-@app.route('/bestmove', methods=['GET'])
+@app.route('/api/bestmove', methods=['GET', 'OPTIONS'])
 def bestmove():
+    if request.method == 'OPTIONS':
+        return jsonify({}), 200
     fen = request.args.get('fen', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
     depth = int(request.args.get('depth', 4))
     try:
@@ -34,22 +37,11 @@ def bestmove():
             'bestmove': move_str,
             'fen': fen,
             'depth': depth,
-            'nodes': search.nodes,
-            'score': search.best_score if hasattr(search, 'best_score') else None
+            'nodes': search.nodes
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-@app.route('/eval', methods=['GET'])
-def evaluate_position():
-    fen = request.args.get('fen', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
-    try:
-        from chess_engine.evaluate import evaluate
-        board = Board(fen)
-        score = evaluate(board)
-        return jsonify({'score': score, 'fen': fen})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
-# Vercel requires the app to be callable as a module-level variable
-# but Flask will be detected automatically if we just define 'app'
+# برای تست محلی
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
