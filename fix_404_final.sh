@@ -1,3 +1,12 @@
+#!/usr/bin/env bash
+# fix_404_final.sh – رفع قطعی خطای 404 برای معماری ستاره‌ای (هم محلی، هم Vercel)
+
+cd ~/chess-engine
+
+echo "=== رفع خطای 404: افزودن سرو استاتیک به Flask (محلی) و اصلاح Vercel ==="
+
+# ────────────── 1. به‌روزرسانی backend/app.py (سرو استاتیک در محیط محلی) ──────────────
+cat > backend/app.py << 'EOF'
 import sys, os, traceback
 from flask import Flask, request, jsonify, send_from_directory
 
@@ -57,3 +66,27 @@ if not IS_VERCEL:
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+EOF
+
+# ────────────── 2. اطمینان از صحت vercel.json ──────────────
+cat > vercel.json << 'EOF'
+{
+  "builds": [
+    { "src": "backend/app.py", "use": "@vercel/python" },
+    { "src": "frontend/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "backend/app.py" },
+    { "src": "/", "dest": "frontend/index.html" },
+    { "src": "/(.*)", "dest": "frontend/$1" }
+  ]
+}
+EOF
+
+echo ""
+echo "✅ اصلاحات انجام شد. اکنون:"
+echo "   🧪 تست محلی:"
+echo "      python backend/app.py"
+echo "      سپس در مرورگر: http://localhost:5000"
+echo "   ☁️ انتشار در Vercel:"
+echo "      git add -A && git commit -m 'Fix 404: static serving in Flask & Vercel' && git push"
