@@ -1,13 +1,18 @@
-from flask import Flask, request, jsonify
-import sys, os
+import os, sys, traceback
+from flask import Flask, request, jsonify, send_from_directory
 
-# مسیر اصلی پروژه را به sys.path اضافه می‌کنیم
+# تشخیص محیط: اگر روی Vercel نباشیم، فایل‌های استاتیک را هم سرو می‌کنیم
+IS_VERCEL = os.environ.get('VERCEL') is not None
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from chess_engine.board import Board
 from chess_engine.search import Search
 
-app = Flask(__name__)
+app = Flask(__name__,
+            static_folder='../public' if not IS_VERCEL else None,
+            static_url_path='' if not IS_VERCEL else None)
 
+# CORS
 @app.after_request
 def add_cors(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
@@ -15,12 +20,13 @@ def add_cors(response):
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
     return response
 
+# API endpoint
 @app.route('/api/bestmove', methods=['GET', 'OPTIONS'])
 def bestmove():
     if request.method == 'OPTIONS':
         return jsonify({}), 200
     fen = request.args.get('fen', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
-    depth = int(request.args.get('depth', 4))
+    depth = min(int(request.args.get('depth', 2)), 3)   # حداکثر ۳ برای سرعت
     try:
         board = Board(fen)
         search = Search(board)
@@ -35,15 +41,19 @@ def bestmove():
             move_str = square_to_str(from_sq) + square_to_str(to_sq) + promo_str
         else:
             move_str = None
-        return jsonify({
-            'bestmove': move_str,
-            'fen': fen,
-            'depth': depth,
-            'nodes': search.nodes
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'bestmove': move_str, 'depth': depth, 'nodes': search.nodes})
+    except Exception:
+        return jsonify({'error': traceback.format_exc()}), 500
 
-# فقط برای تست محلی – Vercel از این خط استفاده نمی‌کند
+# فقط در محیط محلی: سرو فایل‌های استاتیک
+if not IS_VERCEL:
+    @app.route('/')
+    def index():
+        return send_from_directory('../public', 'index.html')
+
+    @app.route('/<path:path>')
+    def serve_static(path):
+        return send_from_directory('../public', path)
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
