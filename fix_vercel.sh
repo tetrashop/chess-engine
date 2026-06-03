@@ -1,3 +1,10 @@
+#!/usr/bin/env bash
+# fix_vercel.sh – رفع خطای 404 در Vercel
+
+cd ~/chess-engine
+
+# ────────────── 1. به‌روزرسانی api/index.py (فقط API بدون static) ──────────────
+cat > api/index.py << 'EOF'
 from flask import Flask, request, jsonify
 import sys, os
 
@@ -47,3 +54,29 @@ def bestmove():
 # فقط برای تست محلی – Vercel از این خط استفاده نمی‌کند
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+EOF
+
+# ────────────── 2. به‌روزرسانی vercel.json (تفکیک static و api) ──────────────
+cat > vercel.json << 'EOF'
+{
+  "builds": [
+    { "src": "api/index.py", "use": "@vercel/python" },
+    { "src": "public/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "api/index.py" },
+    { "src": "/", "dest": "public/index.html" },
+    { "src": "/(.*)", "dest": "public/$1" }
+  ]
+}
+EOF
+
+# ────────────── 3. اطمینان از عدم وجود static_folder اضافی در Flask ──────────────
+echo ""
+echo "✅ فایل‌ها اصلاح شدند."
+echo "حالا برای انتشار روی Vercel:"
+echo "  git add -A && git commit -m 'Fix Vercel routing: separate static & API' && git push"
+echo ""
+echo "برای تست محلی (در صورت تمایل):"
+echo "  python api/index.py"
+echo "  (سپس public/index.html را جداگانه باز کنید – API روی localhost:5000 اجراست)"
