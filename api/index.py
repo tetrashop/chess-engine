@@ -1,18 +1,21 @@
-from flask import Flask, request, jsonify
-import sys, os
+import os
+from flask import Flask, request, jsonify, send_from_directory
+import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from chess_engine.board import Board
 from chess_engine.search import Search
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../public', static_url_path='')
 
+# CORS headers
 @app.after_request
-def add_cors_headers(response):
+def add_cors(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
     return response
 
+# API endpoint
 @app.route('/api/bestmove', methods=['GET', 'OPTIONS'])
 def bestmove():
     if request.method == 'OPTIONS':
@@ -42,6 +45,14 @@ def bestmove():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-# برای تست محلی
+# Serve static files (index.html, etc.)
+@app.route('/')
+def index():
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory(app.static_folder, path)
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)

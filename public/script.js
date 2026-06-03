@@ -1,13 +1,10 @@
-// آدرس API خود را در Vercel جایگزین کنید (یا تست محلی)
-const API_URL = "/api/bestmove"; 
+const API_URL = "/api/bestmove";  // relative path works locally & on Vercel
 
 let board = null;
 let game = new Chess();
-let playerColor = 'w'; // سفید بازیکن
-let computerColor = 'b';
+let playerColor = 'w';
 let isThinking = false;
 
-// مقداردهی اولیه تخته
 function initBoard() {
     board = Chessboard('board', {
         draggable: true,
@@ -15,69 +12,51 @@ function initBoard() {
         orientation: playerColor,
         onDragStart: onDragStart,
         onDrop: onDrop,
-        onSnapEnd: onSnapEnd
+        onSnapEnd: onSnapEnd,
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png' // تصاویر استاندارد ویکی‌پدیا
     });
     updateStatus();
 }
 
-// جلوگیری از حرکت در نوبت کامپیوتر یا پایان بازی
 function onDragStart(source, piece, position, orientation) {
-    if (game.game_over() || isThinking || game.turn() !== playerColor) {
-        return false;
-    }
+    if (game.game_over() || isThinking || game.turn() !== playerColor) return false;
 }
 
-// دریافت حرکت بازیکن
 function onDrop(source, target) {
     const move = game.move({
         from: source,
         to: target,
-        promotion: 'q' // همیشه وزیر (برای سادگی)
+        promotion: 'q'
     });
-
     if (move === null) return 'snapback';
-
     updateStatus();
-    // بعد از یک مکث کوتاه، نوبت کامپیوتر
-    setTimeout(makeComputerMove, 300);
+    setTimeout(makeAIMove, 300);
 }
 
-function onSnapEnd() {
-    board.position(game.fen());
-}
+function onSnapEnd() { board.position(game.fen()); }
 
-// درخواست بهترین حرکت از API
-async function makeComputerMove() {
+async function makeAIMove() {
     if (game.game_over() || isThinking) return;
-
     isThinking = true;
     $('#status').text('در حال فکر کردن...');
-
     try {
-        const fen = game.fen();
-        const response = await fetch(`${API_URL}?fen=${encodeURIComponent(fen)}&depth=3`);
-        const data = await response.json();
-
+        const resp = await fetch(`${API_URL}?fen=${encodeURIComponent(game.fen())}&depth=3`);
+        const data = await resp.json();
         if (data.bestmove) {
-            const from = data.bestmove.substring(0, 2);
-            const to = data.bestmove.substring(2, 4);
-            const promotion = data.bestmove.length > 4 ? data.bestmove[4] : undefined;
-
-            const move = game.move({ from, to, promotion });
-            if (move) {
-                board.position(game.fen());
-            }
+            const from = data.bestmove.substring(0,2);
+            const to = data.bestmove.substring(2,4);
+            const promo = data.bestmove.length > 4 ? data.bestmove[4] : undefined;
+            game.move({ from, to, promotion: promo });
+            board.position(game.fen());
         }
-    } catch (err) {
-        console.error('خطا در دریافت حرکت:', err);
-        $('#status').text('خطا در ارتباط با سرور');
-    } finally {
-        isThinking = false;
-        updateStatus();
+    } catch (e) {
+        console.error(e);
+        $('#status').text('خطا در ارتباط با موتور');
     }
+    isThinking = false;
+    updateStatus();
 }
 
-// به‌روزرسانی متن وضعیت
 function updateStatus() {
     let status = '';
     if (game.in_checkmate()) {
@@ -85,28 +64,16 @@ function updateStatus() {
     } else if (game.in_draw()) {
         status = 'مساوی';
     } else {
-        let turn = game.turn() === 'w' ? 'سفید' : 'سیاه';
-        status = `نوبت ${turn}`;
+        status = 'نوبت ' + (game.turn() === 'w' ? 'سفید' : 'سیاه');
     }
     $('#status').text(status);
 }
 
-// دکمهٔ بازی جدید
-$('#newGameBtn').click(function() {
-    game.reset();
-    board.start();
-    isThinking = false;
-    updateStatus();
-});
-
-// دکمهٔ چرخاندن تخته
-$('#flipBtn').click(function() {
+$('#newGameBtn').click(() => { game.reset(); board.start(); isThinking = false; updateStatus(); });
+$('#flipBtn').click(() => {
     playerColor = playerColor === 'w' ? 'b' : 'w';
     board.orientation(playerColor);
     updateStatus();
 });
 
-// شروع برنامه
-$(document).ready(function() {
-    initBoard();
-});
+$(document).ready(initBoard);
