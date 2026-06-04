@@ -1,14 +1,17 @@
-// ======================= تنظیمات کلی =======================
 const API_URL = "/api/bestmove";
-const MAX_LEVEL = 8, WINS_TO_ADVANCE = 3;
+const MAX_LEVEL = 8;
+const WINS_TO_ADVANCE = 3;
 
 let board, game, playerColor = 'w', isThinking = false;
 let moveHistory = [], redoStack = [];
 let level = 1, wins = 0, bonusPoints = 0;
 let hintEnabled = false, coachEnabled = false, soundEnabled = true;
-let audioCtx = null, bgMusicInterval = null, pendingBestMove = null;
+let audioCtx = null, bgMusicInterval = null;
+let pendingBestMove = null;
+let isReplayMode = false;   // آیا در حال replay هستیم؟
+let replayTimeout = null;
 
-// ======================= صداها =======================
+// ---------- صداها ----------
 function initAudio() { if (audioCtx) return; try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} }
 function playTone(freq, dur, type='square', vol=0.08) {
     if (!soundEnabled || !audioCtx) return;
@@ -30,12 +33,12 @@ function startBgMusic(){
     if (!soundEnabled || bgMusicInterval) return;
     initAudio();
     const notes = [262,294,330,349,392,440,494,523];
-    let i = 0;
+    let i=0;
     bgMusicInterval = setInterval(()=>{ playTone(notes[i%notes.length],0.4,'sine',0.015); i++; },700);
 }
 function stopBgMusic(){ if(bgMusicInterval){clearInterval(bgMusicInterval);bgMusicInterval=null;} }
 
-// ======================= امتیازات و سطوح =======================
+// ---------- ذخیره و بازیابی ----------
 function loadProgress(){
     try{ const s=JSON.parse(localStorage.getItem('chessEngineProgress')); if(s){ level=s.level||1; wins=s.wins||0; bonusPoints=s.bonusPoints||0; } }catch(e){}
 }
@@ -51,6 +54,7 @@ function updateUI(){
         else if(dl===level) $(this).addClass('active');
         else $(this).addClass('locked');
     });
+    renderTopGames();
 }
 function advanceLevel(){
     if(level<MAX_LEVEL){ level++; wins=0; bonusPoints+=level*15; showToast(`🎉 تبریک! به سطح ${level} ارتقا یافتید! (+${level*15} امتیاز)`); playBonusSound(); }
@@ -58,40 +62,163 @@ function advanceLevel(){
     saveProgress(); updateUI();
 }
 
-// ======================= بازی اصلی =======================
+// ---------- تاریخچه بازی‌ها ----------
+function getGameHistory(){
+    try { return JSON.parse(localStorage.getItem('chessGameHistory') || '[]'); } catch(e) { return []; }
+}
+function saveGameToHistory(result, moves, finalScore){
+    const history = getGameHistory();
+    history.push({
+        date: new Date().toLocaleString('fa-IR'),
+        result: result, // 'user', 'computer', 'draw'
+        moves: moves,   // آرایه‌ای از move objects {from, to, promotion}
+        score: finalScore
+    });
+    // فقط ۲۰ بازی آخر نگه دار
+    if (history.length > 20) history.shift();
+    localStorage.setItem('chessGameHistory', JSON.stringify(history));
+}
+function renderTopGames(){
+    const history = getGameHistory();
+    // سه بازی با بالاترین امتیاز (score)
+    history.sort((a,b) => b.score - a.score);
+    const top3 = history.slice(0,3);
+    const $list = $('#topGamesList').empty();
+    if (top3.length === 0) {
+        $list.append('<div class="game-entry">هنوز بازی‌ای ثبت نشده</div>');
+        return;
+    }
+    top3.forEach((g, idx) => {
+        const resultText = g.result === 'user' ? 'برد کاربر' : (g.result === 'computer' ? 'برد کامپیوتر' : 'مساوی');
+        const entry = $(`<div class="game-entry">
+            <span>${g.date} - ${resultText} (${g.score} امتیاز)</span>
+            <button class="replay-btn">▶️ replay</button>
+        </div>`);
+        entry.find('.replay-btn').click((e) => {
+            e.stopPropagation();
+            startReplay(g.moves);
+        });
+        $list.append(entry);
+    });
+}
+
+// ---------- Replay ----------
+function startReplay(moves){
+    if (isReplayMode) {
+        clearReplay();
+    }
+    isReplayMode = true;
+    // غیرفعال کردن کنترل‌ها
+    $('.controls button').prop('disabled', true);
+    $('#newGameBtn').prop('disabled', false); // فقط بازی جدید فعال باشد برای خروج
+    // ریست تخته
+    game.reset();
+    board.position('start');
+    $('#chatBox').empty().show();
+    $('#status').text('▶️ در حال بازپخش...');
+    stopBgMusic();
+    // اجرای حرکت‌ها با تاخیر
+    let moveIndex = 0;
+    function nextMove(){
+        if (moveIndex >= moves.length) {
+            // پایان replay
+            let resultText = '';
+            if (game.in_checkmate()) {
+                resultText = game.turn() === 'w' ? 'کامپیوتر برنده شد' : 'کاربر برنده شد';
+            } else if (game.in_draw()) {
+                resultText = 'مساوی';
+            } else {
+                resultText = 'بازی ناتمام';
+            }
+            $('#chatBox').append(`<div>🏁 ${resultText}</div>`);
+            $('#status').text(resultText);
+            // بعد از ۸ ثانیه بستن replay
+            replayTimeout = setTimeout(clearReplay, 8000);
+            return;
+        }
+        const m = moves[moveIndex];
+        const move = game.move({from: m.from, to: m.to, promotion: m.promotion || 'q'});
+        if (move) {
+            board.position(game.fen());
+            const player = move.color === 'w' ? 'کاربر' : 'کامپیوتر';
+            const moveStr = m.from + m.to + (m.promotion || '');
+            $('#chatBox').append(`<div>${player}: ${moveStr}</div>`);
+            $('#chatBox').scrollTop($('#chatBox')[0].scrollHeight);
+            if (move.captured) playCaptureSound(); else playMoveSound();
+        }
+        moveIndex++;
+        replayTimeout = setTimeout(nextMove, 1000); // هر حرکت ۱ ثانیه
+    }
+    nextMove();
+}
+function clearReplay(){
+    if (replayTimeout) clearTimeout(replayTimeout);
+    isReplayMode = false;
+    $('.controls button').prop('disabled', false);
+    $('#chatBox').hide().empty();
+    // برگرداندن تخته به وضعیت فعلی بازی (اگر game در حال replay نبوده)
+    // اما چون game در replay تغییر کرده، بهتر است بازی جدید شروع کنیم یا وضعیت قبلی برگردد؟
+    // در اینجا ما game را به حالت initial برمی‌گردانیم تا کاربر بتواند بازی جدید کند.
+    game.reset();
+    board.start();
+    updateStatus();
+    startBgMusic();
+}
+
+// ---------- راه‌اندازی تخته ----------
 function initBoard(){
     board = Chessboard('board', {
-        draggable: true, position: 'start', orientation: playerColor,
-        onDragStart: onDragStart, onDrop: onDrop, onSnapEnd: onSnapEnd,
-        onMouseoverSquare: onMouseoverSquare, onMouseoutSquare: onMouseoutSquare,
+        draggable: true,
+        position: 'start',
+        orientation: playerColor,
+        onDragStart: onDragStart,
+        onDrop: onDrop,
+        onSnapEnd: onSnapEnd,
+        onMouseoverSquare: onMouseoverSquare,
+        onMouseoutSquare: onMouseoutSquare,
         pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
     });
     updateStatus(); updateUI(); startBgMusic();
 }
 function onDragStart(source, piece){
-    if(game.game_over() || isThinking || game.turn()!==playerColor) return false;
+    if(isReplayMode || game.game_over() || isThinking || game.turn()!==playerColor) return false;
     if((playerColor==='w' && piece.startsWith('b')) || (playerColor==='b' && piece.startsWith('w'))) return false;
 }
 function onDrop(source, target){
+    if(isReplayMode) return 'snapback';
     const move = game.move({from:source, to:target, promotion:'q'});
     if(!move) return 'snapback';
+
     if(coachEnabled && pendingBestMove){
         const userMoveStr = source + target + (move.promotion||'');
         const bestMoveStr = pendingBestMove.from + pendingBestMove.to + (pendingBestMove.promotion||'');
-        if(userMoveStr === bestMoveStr){ bonusPoints+=3; saveProgress(); updateUI(); showToast('✅ حرکت عالی! +۳ امتیاز'); playBonusSound(); }
-        else { bonusPoints = Math.max(0, bonusPoints-5); saveProgress(); updateUI(); showToast(`⚠️ بهتر بود ${bestMoveStr} بازی کنید. -۵ امتیاز`); playErrorSound(); }
+        if(userMoveStr === bestMoveStr){
+            bonusPoints += 3; saveProgress(); updateUI();
+            showToast('✅ حرکت عالی! +۳ امتیاز');
+            playBonusSound();
+        } else {
+            bonusPoints = Math.max(0, bonusPoints - 5); saveProgress(); updateUI();
+            showToast(`⚠️ بهتر بود ${bestMoveStr} بازی کنید. -۵ امتیاز`);
+            playErrorSound();
+        }
         pendingBestMove = null;
     }
-    moveHistory.push({move, fenBefore: game.fen()}); redoStack = [];
+
+    moveHistory.push({move, fenBefore: game.fen()});
+    redoStack = [];
     if(move.captured) playCaptureSound(); else playMoveSound();
     if(game.in_check()) playCheckSound();
     updateStatus();
-    if(coachEnabled && !game.game_over()) fetchBestMoveForCoach();
+
+    if(coachEnabled && !game.game_over()){
+        fetchBestMoveForCoach();
+    }
+
     setTimeout(makeComputerMove, 300);
 }
 function onSnapEnd(){ board.position(game.fen()); }
 function onMouseoverSquare(square, piece){
-    if(!hintEnabled || isThinking || game.game_over() || game.turn()!==playerColor) return;
+    if(isReplayMode || !hintEnabled || isThinking || game.game_over() || game.turn()!==playerColor) return;
     if(piece && ((playerColor==='w' && piece.startsWith('w')) || (playerColor==='b' && piece.startsWith('b')))){
         const moves = game.moves({square, verbose:true});
         $('.square-55d63').removeClass('highlight-square');
@@ -100,20 +227,23 @@ function onMouseoverSquare(square, piece){
     }
 }
 function onMouseoutSquare(){ if(hintEnabled) $('.square-55d63').removeClass('highlight-square'); }
+
 async function fetchBestMoveForCoach(){
     try {
         const resp = await fetch(`${API_URL}?fen=${encodeURIComponent(game.fen())}&depth=2`);
         const data = await resp.json();
         if(data.bestmove){
-            const from=data.bestmove.substring(0,2), to=data.bestmove.substring(2,4);
+            const from = data.bestmove.substring(0,2);
+            const to = data.bestmove.substring(2,4);
             const promo = data.bestmove.length>4 ? data.bestmove[4] : undefined;
             const test = game.move({from, to, promotion: promo});
             if(test) { game.undo(); pendingBestMove = {from, to, promotion: promo}; }
         }
-    } catch(e) { pendingBestMove=null; }
+    } catch(e) { pendingBestMove = null; }
 }
+
 async function makeComputerMove(){
-    if(game.game_over() || isThinking) return;
+    if(isReplayMode || game.game_over() || isThinking) return;
     isThinking = true; $('#status').text('⏳ کامپیوتر در حال فکر کردن...');
     let moveToApply = null;
     try {
@@ -144,136 +274,77 @@ async function makeComputerMove(){
         const moveStr = moveToApply.from + moveToApply.to + (moveToApply.promotion||'');
         $('#status').text(`🤖 کامپیوتر: ${moveStr}`).fadeOut(2500, ()=>updateStatus());
     } else { updateStatus(); }
-    isThinking = false; checkGameEnd();
+    isThinking = false;
+    checkGameEnd();
 }
+
 function updateStatus(){
+    if(isReplayMode) return;
     let status='';
     if(game.in_checkmate()){
         status = game.turn()===playerColor ? '❌ کیش و مات! شما باختید.' : '🎉 کیش و مات! شما برنده شدید.';
         if(game.turn()!==playerColor){ wins++; bonusPoints+=10; saveProgress(); updateUI(); if(wins>=WINS_TO_ADVANCE) advanceLevel(); }
         playMateSound();
-    } else if(game.in_draw()){ status='🤝 مساوی'; }
-    else if(game.in_check()){ status = game.turn()===playerColor ? '⚠️ کیش! شما در معرض خطر هستید.' : '⚠️ کیش! کامپیوتر را تهدید کردید.'; }
-    else { status = `نوبت ${game.turn()==='w'?'سفید':'سیاه'}`; }
+        // ذخیره بازی در تاریخچه
+        const result = game.turn()===playerColor ? 'computer' : 'user';
+        const allMoves = moveHistory.map(h => h.move);
+        saveGameToHistory(result, allMoves, bonusPoints);
+        renderTopGames();
+    } else if(game.in_draw()){
+        status='🤝 مساوی';
+        saveGameToHistory('draw', moveHistory.map(h=>h.move), bonusPoints);
+        renderTopGames();
+    } else if(game.in_check()){
+        status = game.turn()===playerColor ? '⚠️ کیش! شما در معرض خطر هستید.' : '⚠️ کیش! کامپیوتر را تهدید کردید.';
+    } else {
+        status = `نوبت ${game.turn()==='w'?'سفید':'سیاه'}`;
+    }
     $('#status').text(status);
 }
 function checkGameEnd(){ if(game.game_over()) stopBgMusic(); }
 
-// دکمه‌های اصلی
+// ---------- undo/redo ----------
 $('#undoBtn').click(()=>{
-    if(isThinking || moveHistory.length<2) return;
+    if(isReplayMode || isThinking || moveHistory.length<2) return;
     for(let i=0;i<2;i++){ if(moveHistory.length){ redoStack.push(moveHistory.pop()); game.undo(); } }
     board.position(game.fen()); updateStatus();
     if(coachEnabled) fetchBestMoveForCoach();
 });
 $('#redoBtn').click(()=>{
-    if(isThinking || redoStack.length<2) return;
+    if(isReplayMode || isThinking || redoStack.length<2) return;
     for(let i=0;i<2;i++){ if(redoStack.length){ const e=redoStack.pop(); game.move(e.move); moveHistory.push(e); } }
     board.position(game.fen()); updateStatus();
     if(coachEnabled) fetchBestMoveForCoach();
 });
+
+// ---------- دکمه‌ها ----------
 $('#newGameBtn').click(()=>{
+    if (isReplayMode) { clearReplay(); return; }
     game.reset(); board.start(); moveHistory=[]; redoStack=[]; isThinking=false;
     updateStatus(); startBgMusic();
     if(coachEnabled) fetchBestMoveForCoach();
 });
-$('#flipBtn').click(()=>{ playerColor = playerColor==='w'?'b':'w'; board.orientation(playerColor); updateStatus(); });
+$('#flipBtn').click(()=>{ if(isReplayMode) return; playerColor = playerColor==='w'?'b':'w'; board.orientation(playerColor); updateStatus(); });
 $('#hintBtn').click(function(){ hintEnabled=!hintEnabled; $(this).toggleClass('active'); if(!hintEnabled) $('.square-55d63').removeClass('highlight-square'); });
 $('#coachBtn').click(function(){
     coachEnabled=!coachEnabled; $(this).toggleClass('active', coachEnabled);
-    if(coachEnabled){ pendingBestMove=null; if(!game.game_over() && game.turn()===playerColor) fetchBestMoveForCoach(); showToast('🧠 مربی فعال شد.'); }
-    else { pendingBestMove=null; showToast('مربی غیرفعال شد.'); }
+    if(coachEnabled){
+        pendingBestMove=null;
+        if(!game.game_over() && game.turn()===playerColor) fetchBestMoveForCoach();
+        showToast('🧠 مربی فعال شد.');
+    } else {
+        pendingBestMove=null;
+        showToast('مربی غیرفعال شد.');
+    }
 });
 $('#soundToggle').click(function(){ soundEnabled=!soundEnabled; $(this).toggleClass('active', soundEnabled); soundEnabled?startBgMusic():stopBgMusic(); });
+
 function showToast(msg){ const $t=$('#toast'); $t.text(msg).addClass('show'); setTimeout(()=>$t.removeClass('show'),3000); }
 
-// ======================= بازی‌های زنده =======================
-const liveGames = [
-    { id:1, boardDiv:'liveBoard1', statusDiv:'liveStatus1', game:new Chess(), boardObj:null, moveTimer:null, ended:false },
-    { id:2, boardDiv:'liveBoard2', statusDiv:'liveStatus2', game:new Chess(), boardObj:null, moveTimer:null, ended:false },
-    { id:3, boardDiv:'liveBoard3', statusDiv:'liveStatus3', game:new Chess(), boardObj:null, moveTimer:null, ended:false }
-];
-
-function initLiveGames(){
-    liveGames.forEach(lg => {
-        lg.game = new Chess();
-        lg.boardObj = Chessboard(lg.boardDiv, {
-            draggable: false,
-            position: 'start',
-            pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
-        });
-        $(`#${lg.statusDiv}`).text('شروع بازی...');
-        startLiveGameLoop(lg);
-    });
-}
-
-async function startLiveGameLoop(lg){
-    if(lg.ended) return;
-    if(lg.game.game_over()) {
-        handleGameEnd(lg);
-        return;
-    }
-    // دریافت حرکت از API
-    const fen = lg.game.fen();
-    try {
-        const resp = await fetch(`${API_URL}?fen=${encodeURIComponent(fen)}&depth=2`);
-        const data = await resp.json();
-        if(data.bestmove){
-            const from = data.bestmove.substring(0,2);
-            const to = data.bestmove.substring(2,4);
-            const promo = data.bestmove.length>4 ? data.bestmove[4] : undefined;
-            const move = lg.game.move({from, to, promotion: promo});
-            if(move){
-                lg.boardObj.position(lg.game.fen());
-                const moveDesc = `${move.from}→${move.to}${move.promotion ? '='+move.promotion : ''}`;
-                $(`#${lg.statusDiv}`).text(`بازی ${lg.id}: ${moveDesc}`);
-            }
-        }
-    } catch(e) {
-        // حرکت تصادفی در صورت خطا
-        const moves = lg.game.moves({verbose:true});
-        if(moves.length){
-            const rand = moves[Math.floor(Math.random()*moves.length)];
-            lg.game.move(rand);
-            lg.boardObj.position(lg.game.fen());
-        }
-    }
-    if(lg.game.game_over()) {
-        handleGameEnd(lg);
-        return;
-    }
-    // ادامه بازی بعد از مکث
-    lg.moveTimer = setTimeout(() => startLiveGameLoop(lg), 1000);
-}
-
-function handleGameEnd(lg){
-    lg.ended = true;
-    if(lg.moveTimer) clearTimeout(lg.moveTimer);
-    let resultText = '';
-    if(lg.game.in_checkmate()){
-        const winner = lg.game.turn() === 'w' ? 'سیاه' : 'سفید';
-        resultText = `کیش و مات! ${winner} برد.`;
-    } else if(lg.game.in_draw()){
-        resultText = 'مساوی';
-    } else {
-        resultText = 'پایان بازی';
-    }
-    $(`#${lg.statusDiv}`).text(resultText).css('color','gold');
-    // بعد از ۸ ثانیه تخته را مخفی کرده و بازی جدید شروع کن
-    setTimeout(() => {
-        $(`#${lg.statusDiv}`).css('color','#ccc').text('بازی جدید...');
-        lg.game.reset();
-        lg.boardObj.start();
-        lg.ended = false;
-        startLiveGameLoop(lg);
-    }, 8000);
-}
-
-// ======================= شروع کلی =======================
 $(document).ready(()=>{
     game = new Chess();
     loadProgress();
     initBoard();
-    initLiveGames();
+    renderTopGames();
     $('#soundToggle').addClass('active');
 });
