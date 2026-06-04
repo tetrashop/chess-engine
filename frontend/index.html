@@ -10,6 +10,8 @@
 <body>
     <div class="container">
         <h1>♟️ ChessEnginePy</h1>
+
+        <!-- بخش بازی اصلی (شما در مقابل AI) -->
         <div class="levels-bar" id="levelsBar">
             <span class="level-dot done">۱</span><span class="level-dot done">۲</span>
             <span class="level-dot active">۳</span><span class="level-dot">۴</span>
@@ -32,6 +34,24 @@
             <button id="soundToggle">🔊 صدا</button>
         </div>
         <div id="status">نوبت شما (سفید)</div>
+
+        <!-- بخش بازی‌های زنده -->
+        <hr style="border-color:#444; margin: 30px 0 20px;">
+        <h2 style="color:#f0d9b5;">🎥 بازی‌های زنده</h2>
+        <div id="liveGamesContainer" style="display:flex; flex-wrap:wrap; justify-content:center; gap:20px;">
+            <div class="live-game" id="liveGame1">
+                <div class="board" id="liveBoard1" style="width:200px;"></div>
+                <div class="live-status" id="liveStatus1">در حال بارگذاری...</div>
+            </div>
+            <div class="live-game" id="liveGame2">
+                <div class="board" id="liveBoard2" style="width:200px;"></div>
+                <div class="live-status" id="liveStatus2">در حال بارگذاری...</div>
+            </div>
+            <div class="live-game" id="liveGame3">
+                <div class="board" id="liveBoard3" style="width:200px;"></div>
+                <div class="live-status" id="liveStatus3">در حال بارگذاری...</div>
+            </div>
+        </div>
         <div id="toast" class="toast"></div>
     </div>
 
