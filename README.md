@@ -1,7 +1,7 @@
-# ♟️ ChessEnginePy – A Star‑Topology UCI Chess Engine in Python
+# ♟️ ChessEnginePy – A Star‑Topology UCI Chess Engine with Intelligent Coach
 
 **Translated from the C++ ChessEngine by [Tetrashop](https://github.com/tetrashop/ChessEngine)**  
-**Pure Python • UCI Protocol • Alpha‑Beta Search • Bitboards • REST API • Web GUI**
+**Pure Python • UCI Protocol • Alpha‑Beta Search • Bitboards • REST API • Web GUI • Coach • Levels • SFX**
 
 [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -12,11 +12,13 @@
 
 ## 📜 Abstract
 
-This project presents a complete, bug‑free, pure Python chess engine that adheres to the Universal Chess Interface (UCI) standard. The engine uses **bitboard** representation, **alpha‑beta pruning** with iterative deepening, **quiescence search**, and **piece‑square tables** for positional evaluation.
+This project delivers a **complete, bug‑free, pure Python chess engine** that conforms to the Universal Chess Interface (UCI) standard. The engine employs **bitboard** representation, **alpha‑beta pruning** with iterative deepening, **quiescence search**, and **piece‑square tables** for positional evaluation.
 
-The system is architected in a **star topology**: a central backend API (Flask) serves the chess AI, while multiple lightweight frontend clients (HTML/CSS/JavaScript) connect to it via HTTP. This design allows simultaneous users to play against the same AI instance, suitable for deployment on serverless platforms like Vercel.
+The system is architected in a **star topology**: a central backend API (Flask) serves the chess AI, while multiple lightweight frontend clients (HTML/CSS/JavaScript) connect to it via HTTP. This design enables many simultaneous users to play against the same AI instance and is well‑suited for serverless platforms such as Vercel.
 
-This document serves as both a user manual and a scientific article covering the theoretical foundations, implementation details, encountered errors, and their solutions.
+Beyond a simple chess opponent, the application now includes an **intelligent coach**, a **progression system with eight levels**, **sound effects & background music**, **visual move hints**, **undo/redo**, and full Persian language support – turning it into an immersive learning and gaming experience.
+
+This document serves as both a user manual and a scientific paper covering the theoretical foundations, implementation details, encountered errors, and their solutions.
 
 ---
 
@@ -41,7 +43,13 @@ The static evaluation combines:
 
 The final score is returned from the side‑to‑move’s perspective.
 
-### 5. Star Topology & REST API
+### 5. Intelligent Coach
+When enabled, the coach fetches the engine’s best move **before** the user’s turn. After the user moves:
+- If the move matches the best move → **+3 bonus points**.
+- If the move differs → **‑5 bonus points** and a message shows the optimal move.
+Points never drop below zero. The coach encourages learning by providing immediate, non‑intrusive feedback.
+
+### 6. Star Topology & REST API
 The engine is wrapped in a Flask web server that exposes a REST endpoint `/api/bestmove`. This separation allows:
 - A single AI backend to serve many clients.
 - Easy integration with web interfaces, mobile apps, or other services.
@@ -76,6 +84,23 @@ chess-engine/
 2. The current FEN is sent via `fetch` to `GET /api/bestmove?fen=...&depth=3`.  
 3. Flask server instantiates `Board` and `Search`, runs the search, returns the best move in JSON.  
 4. JavaScript applies the move on the board.
+
+---
+
+## ✨ Features (Full List)
+
+| Category | Feature |
+|----------|---------|
+| **AI** | Alpha‑beta search, iterative deepening, quiescence search, PST evaluation |
+| **API** | REST endpoint `/api/bestmove` with CORS |
+| **Progression** | 8 levels, visual level bar (locked / active / completed) |
+| **Coach** | Best‑move hint with fair scoring (+3 / -5 points) |
+| **Scoring** | Bonus points, win counter, level advancement |
+| **Sound** | Move, capture, check, checkmate, bonus, error sounds + background music |
+| **Visual** | Highlight legal moves, toast notifications |
+| **Undo/Redo** | Full move history, step back/forward (by pairs) |
+| **UI** | Persian language, responsive buttons, flip board |
+| **Deployment** | One‑click Vercel deploy with `vercel.json` |
 
 ---
 
@@ -116,6 +141,10 @@ chess-engine/
 - Added a status message (`🤖 کامپیوتر: e7e5`) that shows the computer’s move and fades out.  
 - Ensured game turn always advances correctly.
 
+### Error 7: Sound, undo/redo, hints, and scoring not working
+**Cause:** Missing logic bindings and incorrect state management.  
+**Solution:** Fully rewrote `script.js` with proper event bindings, persistent state (localStorage), and a dedicated coach module.
+
 ---
 
 ## 🚀 Quick Start
@@ -131,7 +160,7 @@ cd chess-engine
 python backend/app.py
 ```
 
-Open http://localhost:5000 in your browser. Play as White – the computer responds with Black.
+Open http://localhost:5000 in your browser. All features (coach, levels, sounds) are available.
 
 Standalone UCI Mode
 
@@ -150,7 +179,7 @@ Deploy to Vercel
 1. Push the code to GitHub.
 2. In Vercel, import the tetrashop/chess-engine repository.
 3. Set Framework Preset to Other, Install Command to pip install -r backend/requirements.txt.
-4. Deploy – your AI chess service is live.
+4. Deploy – your AI chess service with coach is live.
 
 ---
 
