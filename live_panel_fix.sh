@@ -1,3 +1,9 @@
+#!/usr/bin/env bash
+cd ~/chess-engine
+
+echo "=== اصلاح پنل: نمایش بازی زنده هنگام بازی، و بهترین بازی‌ها پس از اتمام ==="
+
+cat > frontend/script.js << 'JSEOF'
 const API_URL = "/api/bestmove";
 const MAX_LEVEL = 8;
 const WINS_TO_ADVANCE = 3;
@@ -357,3 +363,12 @@ $(document).ready(()=>{
     renderGamePanel();
     $('#soundToggle').addClass('active');
 });
+JSEOF
+
+echo "✅ اصلاح کامل شد."
+echo "   - اگر بازی در جریان باشد: پنل بالا '🟢 بازی زنده' با دکمهٔ مشاهدهٔ زنده نشان می‌دهد."
+echo "   - اگر بازی تمام شده باشد: سه بازی برتر از تاریخچه نمایش داده می‌شوند."
+echo ""
+echo "🚀 برای انتشار:"
+echo "   git add -A && git commit -m 'Live game panel & top games after finish' && git push"
+echo "   سپس Deploy Hook را اجرا کنید."
