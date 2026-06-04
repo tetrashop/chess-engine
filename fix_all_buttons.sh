@@ -1,3 +1,12 @@
+#!/usr/bin/env bash
+# fix_all_buttons.sh – ترمیم کامل تمام دکمه‌های فرانت‌اند (بدون باگ)
+
+cd ~/chess-engine
+mkdir -p frontend
+
+echo "=== ترمیم تمام دکمه‌ها و عملکردهای فرانت‌اند ==="
+
+cat > frontend/script.js << 'JSEOF'
 const API_URL = "/api/bestmove";
 const MAX_LEVEL = 8;
 const WINS_TO_ADVANCE = 3;
@@ -365,3 +374,67 @@ $(document).ready(()=>{
     renderGamePanel();
     $('#soundToggle').addClass('active');
 });
+JSEOF
+
+# ────────────── به‌روزرسانی index.html (بدون تغییر مهم) ──────────────
+cat > frontend/index.html << 'HTMLEOF'
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChessEnginePy – بازی شطرنج با هوش مصنوعی</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>♟️ ChessEnginePy</h1>
+        <div class="levels-bar" id="levelsBar">
+            <span class="level-dot done">۱</span><span class="level-dot done">۲</span>
+            <span class="level-dot active">۳</span><span class="level-dot">۴</span>
+            <span class="level-dot locked">۵</span><span class="level-dot locked">۶</span>
+            <span class="level-dot locked">۷</span><span class="level-dot locked">۸</span>
+        </div>
+        <div class="info-panel">
+            <div id="levelDisplay">سطح ۱</div>
+            <div id="bonusDisplay">امتیاز: ۰</div>
+            <div id="winsDisplay">برد: ۰/۳</div>
+            <div id="modeIndicator">شما: سفید</div>
+        </div>
+        <div class="top-games-panel">
+            <h3>🏆 بازی‌های برتر</h3>
+            <div id="topGamesList"></div>
+        </div>
+        <div id="board" style="width: 400px; margin: 0 auto;"></div>
+        <div class="controls">
+            <button id="newGameBtn">🔄 بازی جدید</button>
+            <button id="undoBtn">↩️ بازگشت</button>
+            <button id="redoBtn">↪️ پیشروی</button>
+            <button id="flipBtn">🔃 چرخاندن صفحه</button>
+            <button id="switchColorBtn">🔀 تعویض رنگ</button>
+            <button id="hintBtn">💡 نمایش حرکت‌های مجاز</button>
+            <button id="coachBtn">🧠 مربی</button>
+            <button id="soundToggle">🔊 صدا</button>
+        </div>
+        <div id="status">نوبت شما (سفید)</div>
+        <div id="chatBox" class="chat-box" style="display:none;"></div>
+        <div id="toast" class="toast"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+HTMLEOF
+
+echo ""
+echo "✅ تمام دکمه‌ها ترمیم شدند:"
+echo "   - بازی جدید / تعویض رنگ / چرخاندن / حرکت‌های مجاز / مربی / صدا"
+echo "   - بازگشت (Undo) / پیشروی (Redo)"
+echo "   - پنل بازی زنده و replay"
+echo ""
+echo "🚀 برای انتشار:"
+echo "   git add -A && git commit -m 'Fix all buttons: fully functional UI' && git push"
