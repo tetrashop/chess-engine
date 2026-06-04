@@ -1,3 +1,11 @@
+#!/usr/bin/env bash
+# fix_turn_bug.sh – رفع مشکل نوبت سفید دوباره و تضمین بازی روان
+
+cd ~/chess-engine
+
+echo "=== رفع مشکل نوبت و افزودن حرکت تصادفی در صورت خطای API ==="
+
+cat > frontend/script.js << 'EOF'
 const API_URL = "/api/bestmove";
 let board = null;
 let game = new Chess();
@@ -140,3 +148,13 @@ $('#flipBtn').click(() => {
 });
 
 $(document).ready(initBoard);
+EOF
+
+echo "✅ اصلاحات انجام شد. تغییرات کلیدی:"
+echo "   - حذف undo حرکت کاربر در صورت خطا"
+echo "   - در صورت خطای API، حرکت تصادفی قانونی برای کامپیوتر اجرا می‌شود"
+echo "   - جلوگیری از قفل شدن بازی و حفظ توالی نوبت‌ها"
+echo "   - نمایش پیام مناسب برای کاربر"
+echo ""
+echo "🚀 تست محلی: python backend/app.py"
+echo "☁️ انتشار: git add -A && git commit -m 'Fix turn bug: fallback random move' && git push"

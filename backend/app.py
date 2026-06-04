@@ -1,7 +1,6 @@
 import sys, os, traceback
 from flask import Flask, request, jsonify, send_from_directory
 
-# تشخیص محیط: اگر روی Vercel نباشیم، فایل‌های استاتیک را هم سرو می‌کنیم
 IS_VERCEL = os.environ.get('VERCEL') is not None
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -12,7 +11,6 @@ app = Flask(__name__,
             static_folder='../frontend' if not IS_VERCEL else None,
             static_url_path='' if not IS_VERCEL else None)
 
-# CORS
 @app.after_request
 def add_cors(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
@@ -20,13 +18,12 @@ def add_cors(response):
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
     return response
 
-# API endpoint
 @app.route('/api/bestmove', methods=['GET', 'OPTIONS'])
 def bestmove():
     if request.method == 'OPTIONS':
         return jsonify({}), 200
     fen = request.args.get('fen', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
-    depth = min(int(request.args.get('depth', 2)), 3)
+    depth = min(int(request.args.get('depth', 3)), 4)   # عمق بیشتر برای اطمینان
     try:
         board = Board(fen)
         search = Search(board)
@@ -45,12 +42,10 @@ def bestmove():
     except Exception:
         return jsonify({'error': traceback.format_exc()}), 500
 
-# فقط در محیط محلی: سرو فایل‌های استاتیک
 if not IS_VERCEL:
     @app.route('/')
     def index():
         return send_from_directory('../frontend', 'index.html')
-
     @app.route('/<path:path>')
     def serve_static(path):
         return send_from_directory('../frontend', path)
