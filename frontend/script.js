@@ -6,37 +6,96 @@ let board, game, playerColor = 'w', isThinking = false;
 let moveHistory = [], redoStack = [];
 let level = 1, wins = 0, bonusPoints = 0;
 let hintEnabled = false, coachEnabled = false, soundEnabled = true;
-let audioCtx = null, bgMusicInterval = null;
+let audioCtx = null, bgMusicTimeout = null, bgMusicOscs = [];
 let pendingBestMove = null;
 let isReplayMode = false, replayTimeout = null;
 let userColor = 'w';
 
-// ---------- صداها ----------
-function initAudio() { if (audioCtx) return; try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} }
-function playTone(freq, dur, type='square', vol=0.08) {
+// ---------- صداهای دلنشین ----------
+function initAudio() {
+    if (audioCtx) return;
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+}
+function playTone(type, freq, dur, vol = 0.15) {
     if (!soundEnabled || !audioCtx) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-    osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, now);
+    gain.gain.setValueAtTime(vol, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
     osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + dur);
+    osc.start(now); osc.stop(now + dur);
 }
-function playMoveSound(){ playTone(520,0.12); }
-function playCaptureSound(){ playTone(220,0.18,'sawtooth'); playTone(160,0.2,'triangle'); }
-function playBonusSound(){ playTone(800,0.1); setTimeout(()=>playTone(1000,0.1),80); }
-function playCheckSound(){ playTone(400,0.12); setTimeout(()=>playTone(500,0.12),120); }
-function playMateSound(){ playTone(300,0.25); setTimeout(()=>playTone(200,0.3),200); }
-function playErrorSound(){ playTone(200,0.2,'square'); }
-function startBgMusic(){
-    if (!soundEnabled || bgMusicInterval) return;
+
+function playMoveSound() {
+    playTone('sine', 660, 0.18, 0.2);
+    setTimeout(() => playTone('sine', 880, 0.15, 0.15), 80);
+}
+function playCaptureSound() {
+    playTone('triangle', 300, 0.25, 0.3);
+    setTimeout(() => playTone('triangle', 200, 0.3, 0.35), 100);
+}
+function playBonusSound() {
+    playTone('sine', 523, 0.15, 0.2);
+    setTimeout(() => playTone('sine', 659, 0.15, 0.2), 120);
+    setTimeout(() => playTone('sine', 784, 0.2, 0.2), 240);
+}
+function playCheckSound() {
+    playTone('square', 440, 0.15, 0.2);
+    setTimeout(() => playTone('square', 550, 0.15, 0.2), 100);
+}
+function playMateSound() {
+    playTone('sawtooth', 220, 0.5, 0.1);
+    setTimeout(() => playTone('sawtooth', 196, 0.6, 0.1), 300);
+}
+function playErrorSound() {
+    playTone('square', 200, 0.25, 0.1);
+}
+
+function startBgMusic() {
+    if (!soundEnabled || bgMusicTimeout) return;
     initAudio();
-    const notes = [262,294,330,349,392,440,494,523];
-    let i=0;
-    bgMusicInterval = setInterval(()=>{ playTone(notes[i%notes.length],0.4,'sine',0.015); i++; },700);
+    const chords = [
+        [261.63, 329.63, 392.00],
+        [293.66, 369.99, 440.00],
+        [349.23, 440.00, 523.25],
+        [392.00, 493.88, 587.33]
+    ];
+    let chordIdx = 0;
+    function playNextChord() {
+        if (!soundEnabled) return;
+        if (bgMusicOscs.length) {
+            bgMusicOscs.forEach(o => { try { o.osc.stop(); o.gain.gain.setValueAtTime(0, audioCtx.currentTime); } catch(e) {} });
+            bgMusicOscs = [];
+        }
+        const chord = chords[chordIdx % chords.length];
+        const now = audioCtx.currentTime;
+        chord.forEach(freq => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now);
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.02, now + 0.4);
+            gain.gain.linearRampToValueAtTime(0.02, now + 2.2);
+            gain.gain.linearRampToValueAtTime(0, now + 2.8);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(now); osc.stop(now + 3);
+            bgMusicOscs.push({ osc, gain });
+        });
+        chordIdx++;
+        bgMusicTimeout = setTimeout(playNextChord, 3000);
+    }
+    playNextChord();
 }
-function stopBgMusic(){ if(bgMusicInterval){clearInterval(bgMusicInterval);bgMusicInterval=null;} }
+function stopBgMusic() {
+    if (bgMusicTimeout) { clearTimeout(bgMusicTimeout); bgMusicTimeout = null; }
+    bgMusicOscs.forEach(o => { try { o.osc.stop(); } catch(e) {} });
+    bgMusicOscs = [];
+}
 
 // ---------- ذخیره و بازیابی ----------
 function loadProgress(){
@@ -74,23 +133,25 @@ function saveGameToHistory(result, moves, finalScore, finalFen){
     history.push({ date: new Date().toLocaleString('fa-IR'), result, moves, score: finalScore, fen: finalFen });
     if (history.length > 20) history.shift();
     localStorage.setItem('chessGameHistory', JSON.stringify(history));
+    renderGamePanel();
 }
 
-// ---------- نمایش پنل (بازی زنده یا بهترین‌ها) ----------
-function renderGamePanel(){
+// ---------- نمایش پنل (بازی زنده + سه بازی برتر) ----------
+function renderGamePanel() {
+    const $live = $('#liveGameIndicator').empty().hide();
     const $list = $('#topGamesList').empty();
+
     if (!game.game_over() && moveHistory.length > 0) {
-        const entry = $('<div class="game-entry" style="background:#2a3a2a;">'
+        $live.show().html('<div class="game-entry" style="background:#2a3a2a;">'
             + '<span>🟢 بازی زنده (در جریان)</span>'
             + '<button class="replay-btn">▶️ مشاهده</button>'
             + '</div>');
-        entry.find('.replay-btn').click(() => {
+        $live.find('.replay-btn').click(() => {
             const moves = moveHistory.map(h => h.move);
             startReplay(moves);
         });
-        $list.append(entry);
-        return;
     }
+
     const history = getGameHistory();
     history.sort((a,b) => b.score - a.score);
     const top3 = history.slice(0,3);
@@ -284,11 +345,9 @@ function updateStatus(){
         playMateSound();
         const result = winner === 'شما' ? 'user' : 'computer';
         saveGameToHistory(result, moveHistory.map(h=>h.move), bonusPoints, game.fen());
-        renderGamePanel();
     } else if(game.in_draw()){
         status='🤝 مساوی';
         saveGameToHistory('draw', moveHistory.map(h=>h.move), bonusPoints, game.fen());
-        renderGamePanel();
     } else if(game.in_check()){
         status = game.turn()===userColor ? '⚠️ کیش! شما در معرض خطر هستید.' : '⚠️ کیش! کامپیوتر را تهدید کردید.';
     } else {
@@ -298,7 +357,7 @@ function updateStatus(){
 }
 function checkGameEnd(){ if(game.game_over()) stopBgMusic(); }
 
-// ---------- دکمه‌ها (کامل و واقعی) ----------
+// ---------- دکمه‌ها ----------
 $('#newGameBtn').click(()=>{
     if (isReplayMode) { clearReplay(); return; }
     game.reset(); board.start(); moveHistory=[]; redoStack=[]; isThinking=false;
@@ -357,7 +416,6 @@ $('#soundToggle').click(function(){
 
 function showToast(msg){ const $t=$('#toast'); $t.text(msg).addClass('show'); setTimeout(()=>$t.removeClass('show'),3000); }
 
-// ---------- شروع ----------
 $(document).ready(()=>{
     game = new Chess();
     loadProgress();
