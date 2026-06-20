@@ -1,0 +1,18 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.tetrashop.chessengine">
+    <application
+        android:allowBackup="true"
+        android:label="Chess AI"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.NoTitleBar">
+        <activity android:name="android.support.customtabs.trusted.LauncherActivity"
+            android:exported="true">
+            <meta-data android:name="android.support.customtabs.trusted.META_TRUSTED_WEB_ACTIVITY"
+                android:resource="@raw/twa" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

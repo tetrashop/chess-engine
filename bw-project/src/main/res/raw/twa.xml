@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<twamanifest>
+    <application name="Chess AI"
+        package="com.tetrashop.chessengine"
+        url="https://chess-engine.vercel.app"
+        manifesturl="https://chess-engine.vercel.app/manifest.json" />
+</twamanifest>
