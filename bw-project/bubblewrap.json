@@ -1,0 +1,12 @@
+{
+  "packageId": "com.tetrashop.chessengine",
+  "name": "ChessEnginePy",
+  "launcherName": "Chess AI",
+  "display": "standalone",
+  "backgroundColor": "#1a1a1a",
+  "themeColor": "#f0d9b5",
+  "startUrl": "/",
+  "manifestUrl": "https://chess-engine.vercel.app/manifest.json",
+  "jdkPath": "/path/to/jdk",
+  "androidSdkPath": "/path/to/sdk"
+}
