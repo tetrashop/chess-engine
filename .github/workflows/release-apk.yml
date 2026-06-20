@@ -31,15 +31,19 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      - name: Build APK from PWA manifest
+      - name: Build APK
         run: |
-          # پاسخ خودکار "no" به سؤال نصب JDK
-          echo "no" | bubblewrap init --manifest https://chess-engine.vercel.app/manifest.json
+          bubblewrap init \
+            --manifest https://chess-engine.vercel.app/manifest.json \
+            --directory ./bw-project \
+            --jdkPath $JAVA_HOME \
+            --skipInstall
+          cd bw-project
           bubblewrap build
 
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: app-release-signed.apk
+          files: bw-project/app-release-signed.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
