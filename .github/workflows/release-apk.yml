@@ -1,4 +1,4 @@
-name: Build APK with Bubblewrap (non‑interactive)
+name: Build APK with Bubblewrap (expect)
 
 on:
   release:
@@ -31,12 +31,20 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      - name: Build APK (non‑interactive)
+      - name: Install expect
+        run: sudo apt-get update && sudo apt-get install -y expect
+
+      - name: Run bubblewrap init with expect
         run: |
-          # پاسخ خودکار: "no" به نصب JDK، سپس مسیر JDK موجود
-          printf "no\n$JAVA_HOME\n" | bubblewrap init \
-            --manifest https://chess-engine.vercel.app/manifest.json \
-            --directory ./bw-project
+          expect << 'EXPECT_EOF'
+          spawn bubblewrap init --manifest https://chess-engine.vercel.app/manifest.json --directory ./bw-project
+          expect "Do you want Bubblewrap to install the JDK" { send "no\r" }
+          expect "Path to your existing JDK 17:" { send "$env(JAVA_HOME)\r" }
+          expect eof
+          EXPECT_EOF
+
+      - name: Build APK
+        run: |
           cd bw-project
           bubblewrap build
 
