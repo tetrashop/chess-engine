@@ -32,5 +32,6 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.google.androidbrowserhelper:browserhelper:2.5.0'
+    // استفاده از WebView ساده - همیشه در دسترس
+    implementation 'androidx.webkit:webkit:1.8.0'
 }
