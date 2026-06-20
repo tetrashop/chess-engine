@@ -18,19 +18,14 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install PWA Builder CLI
+      - name: Install PWA Builder CLI (correct package)
         run: npm install -g @pwabuilder/cli
 
-      - name: Generate APK from PWA manifest
+      - name: Generate APK using pwabuilder.json
         run: |
-          npx pwabuilder package \
-            --manifestFile frontend/manifest.json \
-            --siteUrl "https://chess-engine.vercel.app" \
-            --output ./apk-output \
-            --platform android \
-            --logLevel info
-          # نمایش فایل‌های تولیدشده
-          find ./apk-output -name "*.apk" -exec cp {} ./ \;
+          npx @pwabuilder/cli package --logLevel info
+          # خروجی APK معمولاً در پوشه‌ی android/ تولید می‌شود
+          find . -name "*.apk" -exec cp {} ./ \;
 
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2

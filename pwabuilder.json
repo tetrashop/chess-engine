@@ -1,0 +1,25 @@
+{
+  "package": {
+    "packageId": "com.tetrashop.chessengine",
+    "name": "ChessEnginePy",
+    "launcherName": "Chess AI",
+    "display": "standalone",
+    "backgroundColor": "#1a1a1a",
+    "themeColor": "#f0d9b5",
+    "startUrl": "/",
+    "manifestUrl": "https://chess-engine.vercel.app/manifest.json",
+    "manifest": {
+      "name": "ChessEnginePy",
+      "short_name": "Chess AI",
+      "start_url": "/",
+      "display": "standalone",
+      "background_color": "#1a1a1a",
+      "theme_color": "#f0d9b5",
+      "icons": [{
+        "src": "https://chessboardjs.com/img/chesspieces/wikipedia/wK.png",
+        "sizes": "64x64",
+        "type": "image/png"
+      }]
+    }
+  }
+}
