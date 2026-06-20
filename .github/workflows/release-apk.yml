@@ -1,4 +1,4 @@
-name: Build APK (pre‑configured)
+name: Build APK (Gradle)
 
 on:
   release:
@@ -22,28 +22,21 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Accept Android SDK Licenses
+      - name: Accept Licenses
         run: |
           mkdir -p $ANDROID_HOME/licenses
           echo "d56f5187479451eabf01fb78af6dfcb131a6481e" > $ANDROID_HOME/licenses/android-sdk-license
           echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-preview-license
 
-      - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli
-
-      - name: Fix paths in bw-project config
-        run: |
-          sed -i "s|/path/to/jdk|$JAVA_HOME|g" bw-project/bubblewrap.json
-          sed -i "s|/path/to/sdk|$ANDROID_HOME|g" bw-project/bubblewrap.json
-
       - name: Build APK
         run: |
           cd bw-project
-          bubblewrap build
+          chmod +x gradlew
+          ./gradlew assembleRelease
 
-      - name: Upload APK to Release
+      - name: Upload APK
         uses: softprops/action-gh-release@v2
         with:
-          files: bw-project/app-release-signed.apk
+          files: bw-project/app/build/outputs/apk/release/app-release-signed.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
