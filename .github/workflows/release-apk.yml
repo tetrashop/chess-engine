@@ -1,22 +1,45 @@
-name: Build APK – Final
+name: Build APK
 
 on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate APK
-        uses: JamieMason/generate-pwa-apk-action@v1
-        with:
-          manifest-url: https://chess-engine.vercel.app/manifest.json
-          apk-name: ChessEnginePy.apk
+      - uses: actions/checkout@v4
 
-      - name: Upload APK to Release
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Bubblewrap
+        run: npm install -g @bubblewrap/cli
+
+      - name: Build APK (non-interactive)
+        run: |
+          # استفاده مستقیم از bubblewrap با تمام گزینه‌های لازم
+          bubblewrap init \
+            --manifest "$MANIFEST_URL" \
+            --directory ./bw-project \
+            --skipInstall \
+            --jdkPath "$JAVA_HOME" \
+            --androidSdkPath "$ANDROID_HOME" || true
+          cd bw-project
+          bubblewrap build
+        env:
+          MANIFEST_URL: https://chess-engine.vercel.app/manifest.json
+          JAVA_HOME: ${{ env.JAVA_HOME }}
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+
+      - name: Upload APK
         uses: softprops/action-gh-release@v2
         with:
-          files: ChessEnginePy.apk
+          files: bw-project/app-release-signed.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
