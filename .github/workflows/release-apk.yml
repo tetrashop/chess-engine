@@ -33,7 +33,8 @@ jobs:
 
       - name: Build APK from PWA manifest
         run: |
-          bubblewrap init --manifest https://chess-engine.vercel.app/manifest.json
+          # پاسخ خودکار "no" به سؤال نصب JDK
+          echo "no" | bubblewrap init --manifest https://chess-engine.vercel.app/manifest.json
           bubblewrap build
 
       - name: Upload APK to Release
