@@ -20,9 +20,12 @@ jobs:
 
       - name: Generate APK from PWA manifest
         run: |
-          # آدرس پروژه روی Vercel (یا دامنه‌ی شما) – مطمئن شوید درست است
-          APP_URL="https://chess-engine.vercel.app"
-          npx pwabuilder package --manifestFile frontend/manifest.json --url "$APP_URL" --output . --platform android
+          npx pwabuilder package \
+            --manifestFile frontend/manifest.json \
+            --siteUrl "https://chess-engine.vercel.app" \
+            --output . \
+            --platform android \
+            --logLevel info
 
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
