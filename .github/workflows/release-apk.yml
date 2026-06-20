@@ -4,6 +4,9 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -13,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install PWA Builder CLI
         run: npm install -g @pwabuilder/cli
@@ -23,9 +26,11 @@ jobs:
           npx pwabuilder package \
             --manifestFile frontend/manifest.json \
             --siteUrl "https://chess-engine.vercel.app" \
-            --output . \
+            --output ./apk-output \
             --platform android \
             --logLevel info
+          # نمایش فایل‌های تولیدشده
+          find ./apk-output -name "*.apk" -exec cp {} ./ \;
 
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
