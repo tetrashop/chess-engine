@@ -16,13 +16,13 @@ jobs:
           node-version: 20
 
       - name: Install PWA Builder CLI
-        run: npm install -g pwabuilder
+        run: npm install -g @pwabuilder/cli
 
       - name: Generate APK from PWA manifest
         run: |
-          # manifest.json در پوشه‌ی frontend/ قرار دارد
-          # PWA Builder از manifest و URL پروژه APK می‌سازد
-          npx pwabuilder package -m frontend/manifest.json -d . -l latest -p android
+          # آدرس پروژه روی Vercel (یا دامنه‌ی شما) – مطمئن شوید درست است
+          APP_URL="https://chess-engine.vercel.app"
+          npx pwabuilder package --manifestFile frontend/manifest.json --url "$APP_URL" --output . --platform android
 
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
