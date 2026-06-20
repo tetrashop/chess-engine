@@ -1,3 +1,12 @@
+#!/usr/bin/env bash
+# fix_pieces_final.sh – جایگزینی کامل تصاویر مهره با SVG داخلی (بدون باگ)
+
+cd ~/chess-engine
+
+echo "=== جایگزینی تصاویر مهره با SVG داخلی ==="
+
+# PIECE_SVGS حاوی SVG برای هر مهره
+cat > frontend/script.js << 'JSEOF'
 const PIECE_SVGS = {
   'wP': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" width="45" height="45"><path d="M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z" fill="#fff" stroke="#000" stroke-width="1.5"/></svg>',
   'wR': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" width="45" height="45"><g stroke="#000" stroke-width="1.5" fill="#fff"><path d="M9 39h27v-3H9v3zm3.5-7h20V9h-20v23zm1-3h18V11h-18v18z"/><path d="M9 39h27v-3H9v3zm3.5-7h20V9h-20v23z" fill="none"/></g></svg>',
@@ -441,3 +450,8 @@ $(document).ready(()=>{
     renderGamePanel();
     $('#soundToggle').addClass('active');
 });
+JSEOF
+
+echo "✅ تمام مهره‌ها (شامل رخ سفید) اکنون با SVG داخلی و بدون نیاز به اینترنت نمایش داده می‌شوند."
+echo "🚀 انتشار:"
+echo "   git add -A && git commit -m 'Complete inline SVG pieces – no missing pieces' && git push"
