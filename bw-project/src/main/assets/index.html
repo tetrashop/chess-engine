@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>شطرنج رامین اجلال</title>
+    <!-- ادغام chessboard.min.css در style.css انجام شده -->
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 </head>
@@ -22,7 +23,6 @@
             <div id="winsDisplay">برد: ۰/۳</div>
             <div id="modeIndicator">شما: سفید</div>
         </div>
-        <!-- پنل بازی زنده (بالا) حذف شد -->
         <div id="board" style="width: 400px; margin: 0 auto;"></div>
         <div class="controls">
             <button id="newGameBtn">🔄 بازی جدید</button>
@@ -37,8 +37,6 @@
         <div id="status">نوبت شما (سفید)</div>
         <div id="chatBox" class="chat-box" style="display:none;"></div>
         <div id="toast" class="toast"></div>
-
-        <!-- پنل سه بازی برتر در پایین صفحه -->
         <div class="bottom-scores-bar" id="bottomScoresBar">
             <span class="score-item">🥇 <span id="score1">-</span></span>
             <span class="score-item">🥈 <span id="score2">-</span></span>
