@@ -12,10 +12,12 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         WebView webView = new WebView(this);
         webView.setWebViewClient(new WebViewClient());
-        WebSettings webSettings = webView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setDomStorageEnabled(true);
-        webView.loadUrl("https://chess-engine.vercel.app");
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setAllowFileAccess(true);
+        // بارگذاری مستقیم فایل لوکال
+        webView.loadUrl("file:///android_asset/index.html");
         setContentView(webView);
     }
 }
