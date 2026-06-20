@@ -1,0 +1,13 @@
+{
+  "name": "شطرنج رامین اجلال",
+  "short_name": "شطرنج",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#f0d9b5",
+  "icons": [{
+    "src": "https://chessboardjs.com/img/chesspieces/wikipedia/wK.png",
+    "sizes": "64x64",
+    "type": "image/png"
+  }]
+}
