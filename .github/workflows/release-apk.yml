@@ -1,4 +1,4 @@
-name: Build APK on Release
+name: Build APK with Bubblewrap
 
 on:
   release:
@@ -8,28 +8,31 @@ permissions:
   contents: write
 
 jobs:
-  build-apk:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          node-version: 22
+          distribution: 'temurin'
+          java-version: '17'
 
-      - name: Install PWA Builder CLI (correct package)
-        run: npm install -g @pwabuilder/cli
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Generate APK using pwabuilder.json
+      - name: Install Bubblewrap CLI
+        run: npm install -g @bubblewrap/cli
+
+      - name: Build APK from PWA manifest
         run: |
-          npx @pwabuilder/cli package --logLevel info
-          # خروجی APK معمولاً در پوشه‌ی android/ تولید می‌شود
-          find . -name "*.apk" -exec cp {} ./ \;
+          bubblewrap init --manifest https://chess-engine.vercel.app/manifest.json
+          bubblewrap build
 
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: "*.apk"
+          files: app-release-signed.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
