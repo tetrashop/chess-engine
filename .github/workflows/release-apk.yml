@@ -9,19 +9,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install Bubblewrap
-        run: npm install -g @bubblewrap/cli
-      - name: Generate APK
+
+      - name: Install PWA Builder CLI
+        run: npm install -g pwabuilder
+
+      - name: Generate APK from PWA manifest
         run: |
-          bubblewrap init --manifest https://chess-engine.vercel.app/manifest.json
-          bubblewrap build
+          # manifest.json در پوشه‌ی frontend/ قرار دارد
+          # PWA Builder از manifest و URL پروژه APK می‌سازد
+          npx pwabuilder package -m frontend/manifest.json -d . -l latest -p android
+
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: app-release-signed.apk
+          files: "*.apk"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
