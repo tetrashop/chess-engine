@@ -1,7 +1,5 @@
 #!/bin/bash
-# Gradle wrapper – downloads and runs the correct Gradle version
-
-# Resolve symlinks
+# Gradle wrapper
 PRG="$0"
 while [ -h "$PRG" ]; do
   ls=`ls -ld "$PRG"`
@@ -13,14 +11,9 @@ while [ -h "$PRG" ]; do
   fi
 done
 APP_HOME=`dirname "$PRG"`
-
-# Download Gradle if needed
 if [ ! -f "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" ]; then
-  echo "Downloading Gradle wrapper..."
   mkdir -p "$APP_HOME/gradle/wrapper"
   curl -L -o "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" \
     https://raw.githubusercontent.com/gradle/gradle/v8.5.0/gradle/wrapper/gradle-wrapper.jar
 fi
-
-# Run Gradle wrapper
 java -cp "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain "$@"

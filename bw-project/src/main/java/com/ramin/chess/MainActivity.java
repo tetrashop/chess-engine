@@ -1,4 +1,4 @@
-package com.tetrashop.chessengine;
+package com.ramin.chess;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -15,8 +15,6 @@ public class MainActivity extends Activity {
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
-        settings.setAllowFileAccess(true);
-        // بارگذاری مستقیم فایل لوکال
         webView.loadUrl("file:///android_asset/index.html");
         setContentView(webView);
     }

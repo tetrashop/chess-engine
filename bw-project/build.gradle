@@ -10,10 +10,10 @@ buildscript {
 apply plugin: 'com.android.application'
 
 android {
-    namespace 'com.tetrashop.chessengine'
+    namespace 'com.ramin.chess'
     compileSdk 34
     defaultConfig {
-        applicationId 'com.tetrashop.chessengine'
+        applicationId 'com.ramin.chess'
         minSdk 21
         targetSdk 34
         versionCode 1
@@ -29,9 +29,4 @@ android {
 repositories {
     google()
     mavenCentral()
-}
-
-dependencies {
-    // استفاده از WebView ساده - همیشه در دسترس
-    implementation 'androidx.webkit:webkit:1.8.0'
 }
