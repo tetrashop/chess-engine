@@ -1,4 +1,4 @@
-name: Build APK (Gradle)
+name: Build APK
 
 on:
   release:
@@ -28,17 +28,14 @@ jobs:
           echo "d56f5187479451eabf01fb78af6dfcb131a6481e" > $ANDROID_HOME/licenses/android-sdk-license
           echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-preview-license
 
-      - name: Install Gradle
-        run: sudo apt-get update && sudo apt-get install -y gradle
-
       - name: Build APK
         run: |
           cd bw-project
-          gradle assembleRelease
+          ./gradlew assembleRelease
 
       - name: Upload APK
         uses: softprops/action-gh-release@v2
         with:
-          files: bw-project/build/outputs/apk/release/app-release-unsigned.apk
+          files: bw-project/app/build/outputs/apk/release/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
