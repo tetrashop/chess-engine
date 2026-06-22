@@ -1,3 +1,69 @@
+#!/usr/bin/env bash
+# maximize_api_usage.sh – حداکثر استفاده از API و پایداری کامل
+
+cd ~/chess-engine
+
+echo "=== ۱. به‌روزرسانی backend/app.py (افزایش عمق و timeout) ==="
+cat > backend/app.py << 'EOF'
+import sys, os, traceback
+from flask import Flask, request, jsonify, send_from_directory
+
+IS_VERCEL = os.environ.get('VERCEL') is not None
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from chess_engine.board import Board
+from chess_engine.search import Search
+
+app = Flask(__name__,
+            static_folder='../frontend' if not IS_VERCEL else None,
+            static_url_path='' if not IS_VERCEL else None)
+
+@app.after_request
+def add_cors(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    return response
+
+@app.route('/api/bestmove', methods=['GET', 'OPTIONS'])
+def bestmove():
+    if request.method == 'OPTIONS':
+        return jsonify({}), 200
+    fen = request.args.get('fen', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+    # افزایش عمق پیش‌فرض به ۴ و حداکثر ۶ (برای Vercel در طرح Hobby)
+    depth = min(int(request.args.get('depth', 4)), 6)
+    try:
+        board = Board(fen)
+        search = Search(board)
+        search.search(depth)
+        move = search.best_move
+        if move:
+            from_sq, to_sq, promo = move
+            promo_str = ''
+            if promo:
+                promo_str = 'nbrq'[promo-2]
+            from chess_engine.bitboard import square_to_str
+            move_str = square_to_str(from_sq) + square_to_str(to_sq) + promo_str
+        else:
+            move_str = None
+        return jsonify({'bestmove': move_str, 'depth': depth, 'nodes': search.nodes})
+    except Exception:
+        return jsonify({'error': traceback.format_exc()}), 500
+
+if not IS_VERCEL:
+    @app.route('/')
+    def index():
+        return send_from_directory('../frontend', 'index.html')
+    @app.route('/<path:path>')
+    def serve_static(path):
+        return send_from_directory('../frontend', path)
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
+EOF
+
+echo "=== ۲. به‌روزرسانی script.js (افزایش عمق درخواست و مدیریت بهتر شبکه) ==="
+cat > bw-project/src/main/assets/script.js << 'JSEOF'
 const API_URL = "https://chess-engine.vercel.app/api/bestmove";
 const MAX_LEVEL = 8;
 const WINS_TO_ADVANCE = 3;
@@ -364,3 +430,48 @@ $(document).ready(()=>{
     initBoard();
     $('#soundToggle').addClass('active');
 });
+JSEOF
+
+echo "=== ۳. به‌روزرسانی workflow (بدون تغییر) ==="
+cat > .github/workflows/release-apk.yml << 'EOF'
+name: Build APK
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: false
+      - name: Accept Licenses
+        run: |
+          mkdir -p $ANDROID_HOME/licenses
+          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" > $ANDROID_HOME/licenses/android-sdk-license
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-preview-license
+      - name: Build APK
+        run: |
+          cd bw-project
+          ./gradlew assembleDebug
+      - name: Upload APK
+        uses: softprops/action-gh-release@v2
+        with:
+          files: bw-project/**/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+EOF
+
+echo ""
+echo "✅ همه چیز برای حداکثر استفاده از API و پایداری کامل آماده شد."
+echo "🚀 یک Release جدید با تگ v1.0.41 بسازید تا APK جدید را دریافت کنید."

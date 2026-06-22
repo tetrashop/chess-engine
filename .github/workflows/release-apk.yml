@@ -1,9 +1,8 @@
-name: Auto Release on Tag
+name: Build APK
 
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -29,21 +28,9 @@ jobs:
         run: |
           cd bw-project
           ./gradlew assembleDebug
-      - name: Create Release and Upload APK
+      - name: Upload APK
         uses: softprops/action-gh-release@v2
         with:
           files: bw-project/**/*.apk
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          body: |
-            📱 شطرنج رامین اجلال – نسخهٔ ${{ github.ref_name }}
-            
-            **امکانات:**
-            - لوگوی جدید
-            - پنل امتیازات زنده در پایین صفحه
-            - مهره‌های SVG داخلی
-            - ۸ سطح، مربی، صداها و...
-            
-            **نصب:** قبل از نصب، نسخه‌های قبلی را حذف کنید.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

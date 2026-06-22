@@ -23,7 +23,8 @@ def bestmove():
     if request.method == 'OPTIONS':
         return jsonify({}), 200
     fen = request.args.get('fen', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
-    depth = min(int(request.args.get('depth', 3)), 4)   # عمق بیشتر برای اطمینان
+    # افزایش عمق پیش‌فرض به ۴ و حداکثر ۶ (برای Vercel در طرح Hobby)
+    depth = min(int(request.args.get('depth', 4)), 6)
     try:
         board = Board(fen)
         search = Search(board)
