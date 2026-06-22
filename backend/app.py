@@ -2,7 +2,6 @@ import sys, os, traceback
 from flask import Flask, request, jsonify, send_from_directory
 
 IS_VERCEL = os.environ.get('VERCEL') is not None
-
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from chess_engine.board import Board
 from chess_engine.search import Search
