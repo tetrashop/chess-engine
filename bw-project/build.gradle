@@ -1,0 +1,28 @@
+buildscript {
+    repositories { google(); mavenCentral() }
+    dependencies { classpath 'com.android.tools.build:gradle:8.2.0' }
+}
+apply plugin: 'com.android.application'
+android {
+    namespace 'com.ramin.chess'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.ramin.chess'
+        minSdk 21; targetSdk 34
+        versionCode 100
+        versionName "4.0.0-final"
+    }
+    signingConfigs {
+        release {
+            storeFile file('ramin-chess.keystore')
+            storePassword 'ramin123'
+            keyAlias 'raminchess'
+            keyPassword 'ramin123'
+        }
+    }
+    buildTypes {
+        debug { signingConfig signingConfigs.release }
+        release { signingConfig signingConfigs.release; minifyEnabled false }
+    }
+}
+repositories { google(); mavenCentral() }
