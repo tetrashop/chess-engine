@@ -16,8 +16,8 @@ android {
         applicationId 'com.ramin.chess'
         minSdk 21
         targetSdk 34
-        versionCode 9
-        versionName "1.2.9"
+        versionCode 10
+        versionName "2.0.0"
     }
     signingConfigs {
         release {
@@ -29,12 +29,11 @@ android {
     }
     buildTypes {
         debug {
-            signingConfig signingConfigs.release   // ← نسخهٔ Debug هم با کلید Release امضا شود
+            signingConfig signingConfigs.release
         }
         release {
             signingConfig signingConfigs.release
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
