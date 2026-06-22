@@ -1,4 +1,4 @@
-const API_URL = "https://chess-engine.vercel.app/api/bestmove";
+const API_URL = "https://chess-engine-89fz.vercel.app/api/bestmove";
 const MAX_LEVEL = 8;
 const WINS_TO_ADVANCE = 3;
 
