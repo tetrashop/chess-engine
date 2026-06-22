@@ -1,3 +1,10 @@
+#!/usr/bin/env bash
+# fix_timeout.sh – رفع تایم‌اوت Vercel و بهینه‌سازی درخواست‌ها
+
+cd ~/chess-engine
+
+echo "=== ۱. کاهش عمق جستجو در backend/app.py ==="
+cat > backend/app.py << 'EOF'
 import sys, os, traceback
 from flask import Flask, request, jsonify, send_from_directory
 
@@ -53,3 +60,25 @@ if not IS_VERCEL:
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+EOF
+
+echo "=== ۲. هماهنگ‌سازی فرانت‌اند با محدودیت Vercel ==="
+# کاهش عمق درخواست‌ها و timeout به ۸ ثانیه
+sed -i 's|const depth = Math.min(level + 2, 6);|const depth = Math.min(level + 1, 3);|' bw-project/src/main/assets/script.js
+sed -i 's|const timeout = setTimeout(() => controller.abort(), 12000);|const timeout = setTimeout(() => controller.abort(), 8000);|' bw-project/src/main/assets/script.js
+sed -i 's|const resp = await fetch(`${API_URL}?fen=${encodeURIComponent(game.fen())}&depth=4`|const resp = await fetch(`${API_URL}?fen=${encodeURIComponent(game.fen())}&depth=3`|' bw-project/src/main/assets/script.js
+
+# اصلاح fetchBestMoveForCoach (مربی)
+sed -i 's|fetch(`${API_URL}?fen=${encodeURIComponent(game.fen())}&depth=4`|fetch(`${API_URL}?fen=${encodeURIComponent(game.fen())}&depth=2`|' bw-project/src/main/assets/script.js
+
+echo "=== ۳. به‌روزرسانی frontend/script.js (برای وب) ==="
+if [ -f frontend/script.js ]; then
+    sed -i 's|const depth = Math.min(level + 2, 6);|const depth = Math.min(level + 1, 3);|' frontend/script.js
+    sed -i 's|const timeout = setTimeout(() => controller.abort(), 12000);|const timeout = setTimeout(() => controller.abort(), 8000);|' frontend/script.js
+fi
+
+echo ""
+echo "✅ تغییرات اعمال شد."
+echo "اکنون دستورات زیر را اجرا کنید:"
+echo "  git add -A && git commit -m 'Fix Vercel timeout: reduce depth to 3, timeout 8s' && git push"
+echo "  سپس یک Release جدید (مثلاً v1.1.3) در گیت‌هاب بسازید."

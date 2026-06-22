@@ -224,7 +224,7 @@ function onMouseoutSquare(){ if(hintEnabled) $('.square-55d63').removeClass('hig
 
 async function fetchBestMoveForCoach(){
     try {
-        const resp = await fetch(`${API_URL}?fen=${encodeURIComponent(game.fen())}&depth=4`);
+        const resp = await fetch(`${API_URL}?fen=${encodeURIComponent(game.fen())}const resp = await fetch(`${API_URL}?fen=${encodeURIComponent(game.fen())}fetch(`${API_URL}?fen=${encodeURIComponent(game.fen())}&depth=4`depth=2`depth=3`);
         const data = await resp.json();
         if(data.bestmove){
             const from = data.bestmove.substring(0,2), to = data.bestmove.substring(2,4);
@@ -242,8 +242,8 @@ async function makeComputerMove(){
     let moveToApply = null;
     try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 12000); // افزایش timeout به ۱۲ ثانیه
-        const depth = Math.min(level + 2, 6); // عمق بیشتر (تا ۶)
+        const timeout = setTimeout(() => controller.abort(), 8000); // افزایش timeout به ۱۲ ثانیه
+        const depth = Math.min(level + 1, 3); // عمق بیشتر (تا ۶)
         const resp = await fetch(`${API_URL}?fen=${encodeURIComponent(game.fen())}&depth=${depth}`, { signal: controller.signal });
         clearTimeout(timeout);
         const data = await resp.json();
