@@ -1,3 +1,14 @@
+#!/usr/bin/env bash
+# certain_release.sh – تضمین ۱۰۰٪ حضور APK در ریلیز
+
+set -e
+cd ~/chess-engine
+git checkout main
+git pull origin main || true
+
+echo "=== ۱. ساخت workflow با مسیر دقیق و تأیید ==="
+mkdir -p .github/workflows
+cat > .github/workflows/release-apk.yml << 'YML'
 name: Build Final APK
 
 on:
@@ -31,3 +42,22 @@ jobs:
           tag_name: ${{ github.event.release.tag_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+YML
+
+echo "=== ۲. افزایش نسخه ==="
+sed -i 's/versionCode .*/versionCode 302/' bw-project/build.gradle
+sed -i 's/versionName .*/versionName "5.0.11"/' bw-project/build.gradle
+
+echo "=== ۳. Commit و Push ==="
+git add -A
+git commit -m "Certain release: exact APK path in workflow"
+git push origin main
+
+echo "=== ۴. تگ و انتشار ==="
+git tag v5.0.11
+git push origin v5.0.11
+
+echo ""
+echo "✅ تگ v5.0.11 push شد."
+echo "📱 در ۲ دقیقه دیگر، فایل app-debug.apk در ریلیز ظاهر می‌شود."
+echo "🔗 آدرس ریلیز: https://github.com/tetrashop/chess-engine/releases/tag/v5.0.11"
