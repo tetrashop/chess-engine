@@ -1,3 +1,11 @@
+#!/usr/bin/env bash
+# final_working_release.sh – تضمین آپلود APK در Release
+
+set -e
+cd ~/chess-engine
+
+echo "=== ۱. اصلاح workflow (استفاده از find + assembleDebug) ==="
+cat > .github/workflows/release-apk.yml << 'EOF'
 name: Build Final APK
 
 on:
@@ -36,3 +44,20 @@ jobs:
           tag_name: ${{ github.event.release.tag_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+EOF
+
+echo "=== ۲. افزایش versionCode و نام نسخه ==="
+sed -i 's/versionCode [0-9]*/versionCode 204/' bw-project/build.gradle
+sed -i 's/versionName "[^"]*"/versionName "5.0.8"/' bw-project/build.gradle
+
+echo "=== ۳. Commit و Push ==="
+git add -A
+git commit -m "Fix APK upload: use find + assembleDebug"
+git push origin main
+
+echo ""
+echo "✅ همه چیز آماده است. حالا تگ جدید را بزنید:"
+echo "   git tag v5.0.8"
+echo "   git push origin v5.0.8"
+echo ""
+echo "📱 این بار فایل APK (app-debug.apk) در Release ظاهر خواهد شد."
