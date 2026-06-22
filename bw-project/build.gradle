@@ -16,8 +16,8 @@ android {
         applicationId 'com.ramin.chess'
         minSdk 21
         targetSdk 34
-        versionCode 300
-        versionName "5.0.9-final"
+        versionCode 301
+        versionName "5.0.10"
     }
     signingConfigs {
         release {
