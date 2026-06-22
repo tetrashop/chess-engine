@@ -24,10 +24,8 @@ jobs:
         run: cd bw-project && ./gradlew assembleDebug
       - name: Show built files
         run: find bw-project -name "*.apk" -type f
-      - name: Upload APK to Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload APK to Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          files: bw-project/app/build/outputs/apk/debug/app-debug.apk
-          tag_name: ${{ github.event.release.tag_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: ChessEnginePy-APK
+          path: bw-project/app/build/outputs/apk/debug/*.apk
