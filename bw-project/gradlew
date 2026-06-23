@@ -1,0 +1,20 @@
+#!/bin/bash
+# Gradle wrapper – downloads the correct Gradle version if needed
+PRG="$0"
+while [ -h "$PRG" ]; do
+  ls=`ls -ld "$PRG"`
+  link=`expr "$ls" : '.*-> \(.*\)$'`
+  if expr "$link" : '/.*' > /dev/null; then
+    PRG="$link"
+  else
+    PRG=`dirname "$PRG"`/"$link"
+  fi
+done
+APP_HOME=`dirname "$PRG"`
+if [ ! -f "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" ]; then
+  echo "Downloading Gradle wrapper..."
+  mkdir -p "$APP_HOME/gradle/wrapper"
+  curl -L -o "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" \
+    https://raw.githubusercontent.com/gradle/gradle/v8.5.0/gradle/wrapper/gradle-wrapper.jar
+fi
+java -cp "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain "$@"

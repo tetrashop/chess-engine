@@ -1,1 +1,1 @@
-// کتابخانه‌های jQuery، chess.js و chessboard.js باید اینجا ادغام شوند
+// کتابخانه‌های jQuery، chess.js و chessboard.js باید اینجا قرار گیرند
