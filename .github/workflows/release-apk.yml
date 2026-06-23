@@ -25,9 +25,8 @@ jobs:
         run: cd bw-project && ./gradlew assembleDebug
       - name: Copy APK to root
         run: |
-          # پیدا کردن فایل APK (در هر مسیری که باشد) و کپی به ریشه
           find bw-project -name "*.apk" -type f -exec cp {} ./app.apk \;
-          ls -la app.apk   # تأیید وجود
+          ls -la app.apk
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
         with:
