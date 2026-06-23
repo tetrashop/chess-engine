@@ -9,8 +9,8 @@ android {
     defaultConfig {
         applicationId 'com.ramin.chess'
         minSdk 21; targetSdk 34
-        versionCode 1001
-        versionName "10.0.1"
+        versionCode 1002
+        versionName "10.0.2"
     }
     signingConfigs {
         release {
