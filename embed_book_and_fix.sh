@@ -1,3 +1,12 @@
+#!/usr/bin/env bash
+# embed_book_and_fix.sh – رفع مشکل «نه کتاب داشت، نه اینترنت» با کتاب داخلی
+
+set -e
+cd ~/chess-engine
+
+echo "📚 ۱. بازنویسی script.js با کتاب افتتاحیهٔ داخلی (بدون fetch)"
+
+cat > bw-project/src/main/assets/script.js << 'JSEOF'
 const API_URL = "https://chess-engine-89fz.vercel.app/api";
 const MAX_LEVEL = 8;
 const WINS_TO_ADVANCE = 3;
@@ -392,3 +401,20 @@ $(document).ready(()=>{
     initBoard();
     $('#soundToggle').addClass('active');
 });
+JSEOF
+
+echo "⚙️ ۲. به‌روزرسانی نسخه و انتشار"
+sed -i 's/versionCode .*/versionCode 1202/' bw-project/build.gradle
+sed -i 's/versionName .*/versionName "12.0.2"/' bw-project/build.gradle
+
+git add -A
+git commit -m "Embed opening book directly into script.js – fix offline"
+git push origin main
+
+git tag v12.0.2
+git push origin v12.0.2
+
+echo ""
+echo "✅ تگ v12.0.2 push شد."
+echo "📱 به Actions بروید و APK را از Artifacts دانلود کنید."
+echo "🔮 این نسخه بدون نیاز به اینترنت، با کتاب حرکات کار می‌کند."
