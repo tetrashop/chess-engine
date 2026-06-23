@@ -1,4 +1,4 @@
-name: Build Final APK
+name: Build APK
 
 on:
   push:

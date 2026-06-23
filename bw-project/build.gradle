@@ -1,42 +1,26 @@
 buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.2.0'
-    }
+    repositories { google(); mavenCentral() }
+    dependencies { classpath 'com.android.tools.build:gradle:8.2.0' }
 }
 apply plugin: 'com.android.application'
-
 android {
     namespace 'com.ramin.chess'
     compileSdk 34
     defaultConfig {
         applicationId 'com.ramin.chess'
-        minSdk 21
-        targetSdk 34
-        versionCode 900
-        versionName "9.0.0"
+        minSdk 21; targetSdk 34
+        versionCode 1000
+        versionName "10.0.0"
     }
     signingConfigs {
         release {
             storeFile file('ramin-chess.keystore')
-            storePassword 'ramin123'
-            keyAlias 'raminchess'
-            keyPassword 'ramin123'
+            storePassword 'ramin123'; keyAlias 'raminchess'; keyPassword 'ramin123'
         }
     }
     buildTypes {
-        release {
-            signingConfig signingConfigs.release
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
+        debug { signingConfig signingConfigs.release }
+        release { signingConfig signingConfigs.release; minifyEnabled false }
     }
 }
-
-repositories {
-    google()
-    mavenCentral()
-}
+repositories { google(); mavenCentral() }

@@ -2,7 +2,8 @@ import sys, os, traceback
 from flask import Flask, request, jsonify, send_from_directory
 
 IS_VERCEL = os.environ.get('VERCEL') is not None
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from chess_engine.board import Board
 from chess_engine.search import Search
 
@@ -22,7 +23,6 @@ def bestmove():
     if request.method == 'OPTIONS':
         return jsonify({}), 200
     fen = request.args.get('fen', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
-    # حداکثر عمق ۳ برای جلوگیری از تایم‌اوت
     depth = min(int(request.args.get('depth', 3)), 3)
     try:
         board = Board(fen)
@@ -32,8 +32,7 @@ def bestmove():
         if move:
             from_sq, to_sq, promo = move
             promo_str = ''
-            if promo:
-                promo_str = 'nbrq'[promo-2]
+            if promo: promo_str = 'nbrq'[promo-2]
             from chess_engine.bitboard import square_to_str
             move_str = square_to_str(from_sq) + square_to_str(to_sq) + promo_str
         else:
