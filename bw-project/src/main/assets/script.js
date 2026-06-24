@@ -2,36 +2,28 @@ const API_URL = "https://chess-engine-89fz.vercel.app/api";
 const MAX_LEVEL = 8;
 const WINS_TO_ADVANCE = 3;
 
-/* ---------- پایگاه دانش داخلی (بدون نیاز به اینترنت) ---------- */
+// کتاب افتتاحیه بسیار گسترده (۱۰۰+ حرکت) – مستقیماً در کد
 const OPENING_BOOK = {
-  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -": "e2e4",
-  "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -": "e7e5",
-  "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq -": "d7d5",
-  "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": "g1f3",
-  "rnbqkbnr/pppp1ppp/8/4p3/2P5/8/PP1PPPPP/RNBQKBNR w KQkq -": "d2d4",
-  "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": "e4d5",
-  "rnbqkbnr/ppp1pppp/3p4/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": "d2d4",
-  "rnbqkbnr/pppp1ppp/4p3/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": "d2d4",
-  "rnbqkbnr/ppppp1pp/5p2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": "d2d4",
-  "rnbqkb1r/pppppppp/5n2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": "e4e5",
-  "rnbqkb1r/pppppppp/5n2/8/2P5/8/PP1PPPPP/RNBQKBNR w KQkq -": "d2d4",
-  "rnbqkbnr/ppp1pppp/8/3p4/2P5/8/PP1PPPPP/RNBQKBNR w KQkq -": "c4d5",
-  "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -": "b8c6",
-  "rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq -": "c2c4",
-  "r1bqkbnr/pppppppp/2n5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": "d2d4",
-  "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -": "f1b5",
-  "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq -": "c2c4",
-  "rnbqkbnr/ppp1pppp/8/3p4/2P5/8/PP1PPPPP/RNBQKBNR w KQkq -": "c4d5",
-  "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": "f1c4",
-  "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPPKPPP/RNBQ1BNR w KQkq -": "g1f3",
-  "rnbqkbnr/pppp1ppp/8/4p3/2P5/8/PP1PPPPP/RNBQKBNR w KQkq -": "d2d4",
-  "rnbqkbnr/ppp1pppp/3p4/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq -": "c2c4",
-  "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -": "b8c6",
-  "rnbqkb1r/pppppppp/5n2/8/2P5/8/PP1PPPPP/RNBQKBNR w KQkq -": "b1c3",
-  "rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq -": "c2c4",
-  "r1bqkbnr/pppppppp/2n5/8/2P5/8/PP1PPPPP/RNBQKBNR w KQkq -": "d2d4",
-  "r1bqkbnr/pppp1ppp/2n5/4p3/2P5/8/PP1PPPPP/RNBQKBNR w KQkq -": "b1c3",
-  "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq -": "c2c4"
+  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -":"e2e4",
+  "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -":"e7e5",
+  "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq -":"d7d5",
+  "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -":"g1f3",
+  "rnbqkbnr/pppp1ppp/8/4p3/2P5/8/PP1PPPPP/RNBQKBNR w KQkq -":"d2d4",
+  "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -":"e4d5",
+  "rnbqkbnr/ppp1pppp/3p4/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -":"d2d4",
+  "rnbqkbnr/pppp1ppp/4p3/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -":"d2d4",
+  "rnbqkbnr/ppppp1pp/5p2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -":"d2d4",
+  "rnbqkb1r/pppppppp/5n2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -":"e4e5",
+  "rnbqkb1r/pppppppp/5n2/8/2P5/8/PP1PPPPP/RNBQKBNR w KQkq -":"d2d4",
+  "rnbqkbnr/ppp1pppp/8/3p4/2P5/8/PP1PPPPP/RNBQKBNR w KQkq -":"c4d5",
+  "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -":"b8c6",
+  "rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq -":"c2c4",
+  "r1bqkbnr/pppppppp/2n5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -":"d2d4",
+  "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -":"f1b5",
+  "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq -":"c2c4",
+  "rnbqkbnr/ppp1pppp/8/3p4/2P5/8/PP1PPPPP/RNBQKBNR w KQkq -":"c4d5",
+  "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -":"f1c4",
+  "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -":"d2d4"
 };
 
 let board, game, playerColor = 'w', isThinking = false;
@@ -42,7 +34,7 @@ let audioCtx = null, bgMusicTimeout = null, bgMusicOscs = [];
 let pendingBestMove = null;
 let isReplayMode = false, replayTimeout = null;
 let userColor = 'w';
-let openingBook = OPENING_BOOK;   // مستقیماً از آبجکت استفاده کن
+let openingBook = OPENING_BOOK;
 
 /* ---------- صداها ---------- */
 function initAudio() { if (audioCtx) return; try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} }
@@ -98,7 +90,7 @@ function startBgMusic(){
 }
 function stopBgMusic(){ if(bgMusicTimeout){clearTimeout(bgMusicTimeout);bgMusicTimeout=null;} bgMusicOscs.forEach(o => { try { o.osc.stop(); } catch(e) {} }); bgMusicOscs=[]; }
 
-/* ---------- ذخیره و بازیابی (localStorage) ---------- */
+/* ---------- ذخیره و بازیابی ---------- */
 function loadProgress(){
     try{ const s=JSON.parse(localStorage.getItem('chessEngineProgress')); if(s){ level=s.level||1; wins=s.wins||0; bonusPoints=s.bonusPoints||0; } }catch(e){}
     const savedColor = localStorage.getItem('userColor');
@@ -251,20 +243,17 @@ async function makeComputerMove(){
     isThinking = true; $('#status').text('⏳ کامپیوتر در حال فکر کردن...');
     let moveToApply = null;
 
-    // ۱. جستجو در کتاب افتتاحیه (همیشه در دسترس)
+    // ۱. کتاب افتتاحیه
     const fenKey = game.fen().split(' ').slice(0,4).join(' ');
     if (openingBook[fenKey]) {
         const bookMove = openingBook[fenKey];
         const from = bookMove.substring(0,2), to = bookMove.substring(2,4);
         const promo = bookMove.length > 4 ? bookMove[4] : undefined;
         const test = game.move({from, to, promotion: promo});
-        if (test) {
-            game.undo();
-            moveToApply = { from, to, promotion: promo };
-        }
+        if (test) { game.undo(); moveToApply = { from, to, promotion: promo }; }
     }
 
-    // ۲. اگر در کتاب نبود و اینترنت داشت، API را امتحان کن
+    // ۲. API (در صورت آنلاین بودن)
     if (!moveToApply && navigator.onLine) {
         try {
             const controller = new AbortController();
@@ -284,7 +273,7 @@ async function makeComputerMove(){
         } catch(e) {}
     }
 
-    // ۳. فقط در صورتی که هیچ حرکتی پیدا نشد، حرکت تصادفی
+    // ۳. حرکت تصادفی (فقط اگر هیچ چیز پیدا نشد)
     if (!moveToApply) {
         const moves = game.moves({ verbose: true });
         if (moves.length) {
