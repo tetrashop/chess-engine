@@ -18,8 +18,8 @@ android {
         applicationId 'com.ramin.chess'
         minSdk 21
         targetSdk 34
-        versionCode 1503
-        versionName "15.0.3"
+        versionCode 1504
+        versionName "15.0.4"
     }
 
     buildTypes {

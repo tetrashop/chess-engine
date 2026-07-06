@@ -1,3 +1,11 @@
+#!/usr/bin/env bash
+# fix_apk_path_v15.sh – رفع مشکل مسیر APK و انتشار v15.0.4
+
+set -e
+cd ~/chess-engine
+
+echo "⚙️ ۱. اصلاح workflow (استفاده از find + cp)"
+cat > .github/workflows/release-apk.yml << 'YML'
 name: Build APK
 on:
   push:
@@ -40,3 +48,23 @@ jobs:
         with:
           name: ChessEnginePy-APK-${{ github.ref_name }}
           path: app.apk
+YML
+
+echo "📦 ۲. افزایش نسخه به ۱۵.۰.۴ (versionCode 1504)"
+sed -i 's/versionCode .*/versionCode 1504/' bw-project/build.gradle
+sed -i 's/versionName .*/versionName "15.0.4"/' bw-project/build.gradle
+
+echo "📦 ۳. Commit، Push و تگ"
+git add -A
+git commit -m "Fix APK path with find, v15.0.4"
+git push origin main
+
+git tag -d v15.0.4 2>/dev/null || true
+git push origin :refs/tags/v15.0.4 2>/dev/null || true
+git tag v15.0.4
+git push origin v15.0.4
+
+echo ""
+echo "✅ تگ v15.0.4 push شد."
+echo "📱 پس از ۲ دقیقه به Actions بروید و APK را از Artifacts دانلود کنید:"
+echo "   https://github.com/tetrashop/chess-engine/actions"
