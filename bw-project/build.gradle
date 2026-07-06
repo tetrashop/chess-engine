@@ -1,4 +1,38 @@
-buildscript{repositories{google();mavenCentral()}dependencies{classpath'com.android.tools.build:gradle:8.2.0'}}
-apply plugin:'com.android.application'
-android{namespace'com.ramin.chess' compileSdk 34 defaultConfig{applicationId'com.ramin.chess' minSdk 21 targetSdk 34 versionCode 1502
-repositories{google();mavenCentral()}
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.0'
+    }
+}
+
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'com.ramin.chess'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.ramin.chess'
+        minSdk 21
+        targetSdk 34
+        versionCode 1503
+        versionName "15.0.3"
+    }
+
+    buildTypes {
+        debug {
+            // استفاده از امضای پیش‌فرض اندروید
+        }
+        release {
+            minifyEnabled false
+        }
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
