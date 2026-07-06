@@ -1,4 +1,4 @@
 buildscript{repositories{google();mavenCentral()}dependencies{classpath'com.android.tools.build:gradle:8.2.0'}}
 apply plugin:'com.android.application'
-android{namespace'com.ramin.chess' compileSdk 34 defaultConfig{applicationId'com.ramin.chess' minSdk 21 targetSdk 34 versionCode 1501
+android{namespace'com.ramin.chess' compileSdk 34 defaultConfig{applicationId'com.ramin.chess' minSdk 21 targetSdk 34 versionCode 1502
 repositories{google();mavenCentral()}
