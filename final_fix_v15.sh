@@ -1,3 +1,11 @@
+#!/usr/bin/env bash
+# final_fix_v15.sh – رفع خطای sdkmanager و انتشار v15.0.2
+
+set -e
+cd ~/chess-engine
+
+echo "⚙️ ۱. جایگزینی workflow با نسخهٔ ساده و تضمینی"
+cat > .github/workflows/release-apk.yml << 'YML'
 name: Build APK
 on:
   push:
@@ -38,3 +46,19 @@ jobs:
         with:
           name: ChessEnginePy-APK-${{ github.ref_name }}
           path: bw-project/app/build/outputs/apk/debug/app-debug.apk
+YML
+
+echo "📦 ۲. commit و push"
+git add -A
+git commit -m "Final fix – manual SDK setup, stable workflow"
+git push origin main
+
+echo "🏷️ ۳. حذف تگ قدیمی و ایجاد v15.0.2 مجدد"
+git tag -d v15.0.2 2>/dev/null || true
+git push origin :refs/tags/v15.0.2 2>/dev/null || true
+git tag v15.0.2
+git push origin v15.0.2
+
+echo ""
+echo "✅ تگ v15.0.2 با موفقیت push شد."
+echo "📱 حالا به Actions بروید و APK را از Artifacts دانلود کنید."
